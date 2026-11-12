@@ -1221,6 +1221,7 @@ end
 function S.Build(parent, artLevel, range, iconLevel)
 	if root then return end
 	S.artTop = artLevel + range             -- (the top of the art: Extras.lua lifts Questie's icons above it)
+	S.iconLevel = iconLevel                 -- (OpenMap's icons: Questie's quest icons go over them, Extras.lua)
 	W, H = ArtSize(WORLD)
 	if not W then return end
 	local function Layer(level)

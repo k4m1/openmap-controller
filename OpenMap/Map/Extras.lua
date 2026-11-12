@@ -354,10 +354,13 @@ local QUESTIE_BASE = 2015               -- the fixed frame level Questie's map i
 
 -- Questie fixes its icons' frame levels from QUESTIE_BASE up (it expects Blizzard's map canvas
 -- near 2000), which is under the stitched map's upper art layers: lift them above the art,
--- keeping their order among themselves (quest finishers in front ...)
+-- keeping their order among themselves (quest finishers in front ...). Its quest icons go over
+-- OpenMap's own icons too (a "?" was hidden under a flight master or a dungeon: #92); its townsfolk
+-- (manual icons) stay under them, just over the art.
 -- (questie: Questie's own order kept, from QUESTIE_BASE; another copy's icon just over the art)
 local function Lift(icon, questie)
 	local top = S.artTop
+	if questie and not icon.isManualIcon and S.iconLevel then top = S.iconLevel end
 	if not top or not icon.GetFrameLevel or not icon.SetFixedFrameLevel then return end
 	local level = icon:GetFrameLevel()
 	if level > top then return end
