@@ -6,6 +6,7 @@ local _, ns = ...
 ns.MapChangelog = {
 	{ version = "Unreleased", date = "", heads = { [1] = "Fixed", }, items = {
 		"|cff6e2c0aQuestie's icons show on the first map you open|r: with Questie 12.8, a map opened on a zone showed none of Questie's icons (their tooltips still came up) until you'd zoomed out to the continent once: icons Questie placed before the map was first opened stayed under its art (#194, #193, #195).",
+		"|cff6e2c0aDungeon level ranges|r: the dungeons' levels on the map are now the ones the game's Group Finder gives (each Scarlet Monastery and Dire Maul wing its own); they were an old level each, five levels wide, and some were far off: Razorfen Kraul showed 24-29 for a dungeon of 29-38 (#201).",
 	} },
 	{ version = "v0.8.6", date = "2026-11-12", heads = { [1] = "Improved", [2] = "Fixed", }, items = {
 		"|cff6e2c0aIcons stay shown while zooming|r: \"Fade icons while zooming\" is now off for everyone, as zooming is smooth enough with them shown; turn it on again in the menu's On the map tab if you prefer it.",
