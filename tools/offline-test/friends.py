@@ -218,6 +218,21 @@ class FriendsTests(unittest.TestCase):
         self.assertNotIn("22", sent_to)
         self.assertNotIn("23", sent_to)
 
+    def test_a_friend_in_another_realm_group_is_on_the_map(self):
+        # Forever: CAMWOWUS2Realm8PvP and CAMWOWUS1Realm4PvP are one pool (#164, #167); EU and US aren't
+        self.lua.execute("""
+            ns.Client = 'Forever'
+            GetNormalizedRealmName = function() return 'CAMWOWUS2Realm8PvP' end
+            friendList = { { name = 'Pal-CAMWOWUS1Realm4PvP', connected = true, level = 30, area = 'Duskwood', className = 'Mage' },
+                { name = 'Far-CAMWOWEU5Realm4PvP', connected = true, level = 30, area = 'Duskwood', className = 'Mage' } }
+        """)
+        self.run_(8)
+        self.lua.execute("Fire('CHAT_MSG_ADDON', 'OpenMapLoc', 'L1\\t1431\\t0.5\\t0.5\\tMAGE\\t30', 'WHISPER', 'Pal-CAMWOWUS1Realm4PvP')")
+        self.lua.execute("Fire('CHAT_MSG_ADDON', 'OpenMapLoc', 'L1\\t1431\\t0.6\\t0.5\\tMAGE\\t30', 'WHISPER', 'Far-CAMWOWEU5Realm4PvP')")
+        self.run_(12)
+        dots = self.lua.eval("(function() local t = {} for _, d in ipairs(pins) do t[#t + 1] = d.full end return table.concat(t, ',') end)()")
+        self.assertEqual(dots, "Pal-CAMWOWUS1Realm4PvP")
+
     def test_heard_places_and_badges(self):
         self.run_(8)
         self.lua.execute("""

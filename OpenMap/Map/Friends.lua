@@ -80,11 +80,12 @@ end
 -- a realm as compared: no spaces, hyphens or apostrophes, any case
 local function Plain(rlm) return (rlm:gsub("[%s%-']", "")):lower() end
 
--- Forever's numbered realms share a ruleset map. Compare the pool, not its shard number:
--- CAMWOWEU5Realm4PvP and CAMWOWEU5Realm12PvP both become camwoweu5realmpvp.
+-- Forever's numbered realms share a ruleset map. Compare the pool, not its group's or shard's number:
+-- CAMWOWEU5Realm4PvP, CAMWOWEU4Realm12PvP both become camwoweurealmpvp (US1 and US2 are one pool too:
+-- #164, #167); the region (EU, US) and the ruleset (PvP ...) still tell pools apart.
 local function RealmPool(rlm)
 	local key = Plain(rlm)
-	if ns.Client == "Forever" then key = key:gsub("realm%d+", "realm") end
+	if ns.Client == "Forever" then key = key:gsub("%d+realm", "realm"):gsub("realm%d+", "realm") end
 	return key
 end
 

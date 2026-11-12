@@ -8,6 +8,9 @@
   players of your own faction: Battle.net friends on the other faction no longer see where you are, nor
   you them (a player's report: it let Horde and Alliance find each other for PvP).
 
+- **Friends in another realm group show on the map**: a friend on CAMWOW US1 and one on US2 (or EU4 and
+  EU5) never saw each other with "Share where you are" on (#164, #167).
+
 ## v0.8.7 (2026-11-12)
 
 ### Fixed
