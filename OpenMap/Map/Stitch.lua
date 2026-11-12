@@ -388,9 +388,12 @@ end
 -- tiles are the next power of two. `mask2`: a second mask on the tiles;
 -- `band`: also draw a colour-matched copy through this mask.
 -- a zone's overlay art is drawn without its banner for a city (ns.MapBannerHoles): Stitch's
--- copy of the banner shows instead, and goes once you're close (S.SetZoom)
+-- copy of the banner shows instead, and goes once you're close (S.SetZoom). The copies are cut from the
+-- English client's art, lettered in English: another language keeps the zone's own banner, in its
+-- language (Thunder Bluff's on esMX, Darnassus' on zhCN: #47)
 local holeMasks = {}
 local function BannerHole(parent, p)
+	if not Baked.english then return end
 	if not (p.mapID and ns.MapBannerHoles and ns.MapBannerHoles[p.mapID]) then return end
 	local key = tostring(parent) .. p.mapID
 	holeMasks[key] = holeMasks[key] or Feather(parent, p, TEX .. "MapBannerHole\\" .. p.mapID)
@@ -1491,7 +1494,7 @@ function S.Build(parent, artLevel, range, iconLevel)
 	-- the zone's art: the city's title at every zoom (its own map is cut down to its plan, without
 	-- its banner), over the city and the close-up layers (the minimap, the caves), with the labels
 	for _, c in ipairs(cities) do
-		local b = ns.MapBanners and ns.MapBanners[c.mapID]
+		local b = Baked.english and ns.MapBanners and ns.MapBanners[c.mapID]
 		local p = b and Place(b[1])
 		if p then
 			local f = CreateFrame("Frame", nil, citiesRoot)
