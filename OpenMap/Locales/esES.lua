@@ -276,6 +276,7 @@ L["Map pins your group, guild or a player shares with you: you're asked whether 
 L["Map pins your party or raid shares with you are added at once, without asking."] = "Las marcas de mapa que tu grupo o banda comparte contigo se añaden al momento, sin preguntar."
 L["Map pins: Ctrl-C to copy, then paste them anywhere (another player's OpenMap: Pins, Import)."] = "Marcas de mapa: Ctrl+C para copiarlas; luego pégalas donde quieras (en el OpenMap de otro jugador: Marcas, Importar)."
 L["Map size"] = "Tamaño del mapa"
+L["MapUtils also changes the world map's zoom and scale: with it and OpenMap both on, the map and Blizzard's quest areas can jump while zooming. Turn one of them off if you see that."] = "MapUtils también cambia el zoom y la escala del mapa del mundo: con él y OpenMap activados, el mapa y las zonas de misión de Blizzard pueden saltar al hacer zoom. Desactiva uno de los dos si lo ves."
 L["Maps painted by hand"] = "Mapas pintados a mano"
 L["Mark"] = "Icono"
 L["Medium"] = "Medio"

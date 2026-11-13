@@ -276,6 +276,7 @@ L["Map pins your group, guild or a player shares with you: you're asked whether 
 L["Map pins your party or raid shares with you are added at once, without asking."] = "파티 또는 공격대가 공유한 지도 핀을 묻지 않고 바로 추가합니다."
 L["Map pins: Ctrl-C to copy, then paste them anywhere (another player's OpenMap: Pins, Import)."] = "지도 핀: Ctrl-C로 복사해 어디에나 붙여넣으십시오 (다른 플레이어의 OpenMap: 핀, 가져오기)."
 L["Map size"] = "지도 크기"
+L["MapUtils also changes the world map's zoom and scale: with it and OpenMap both on, the map and Blizzard's quest areas can jump while zooming. Turn one of them off if you see that."] = "MapUtils도 세계 지도의 확대와 배율을 바꿉니다. MapUtils와 OpenMap을 함께 켜면 확대할 때 지도와 블리자드 퀘스트 지역이 튈 수 있습니다. 그렇다면 둘 중 하나를 끄세요."
 L["Maps painted by hand"] = "손으로 그린 지도"
 L["Mark"] = "표시기"
 L["Medium"] = "보통"

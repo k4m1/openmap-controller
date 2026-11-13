@@ -517,7 +517,7 @@
   "en": "Chat over the full-screen map",
   "where": [
    "Map/Panel.lua:324",
-   "Map/Window.lua:584"
+   "Map/Window.lua:590"
   ]
  },
  {
@@ -871,7 +871,7 @@
  {
   "en": "Drag to move the map",
   "where": [
-   "Map/Window.lua:255"
+   "Map/Window.lua:261"
   ]
  },
  {
@@ -1314,7 +1314,7 @@
   "en": "Full-screen map fills the width",
   "where": [
    "Map/Panel.lua:323",
-   "Map/Window.lua:577"
+   "Map/Window.lua:583"
   ]
  },
  {
@@ -1526,7 +1526,7 @@
  {
   "en": "Keeps the chat windows on show over the map while it's full screen, to keep talking while you look.",
   "where": [
-   "Map/Window.lua:586"
+   "Map/Window.lua:592"
   ]
  },
  {
@@ -1715,7 +1715,13 @@
   "en": "Map size",
   "where": [
    "Map/Panel.lua:1524",
-   "Map/Window.lua:574"
+   "Map/Window.lua:580"
+  ]
+ },
+ {
+  "en": "MapUtils also changes the world map's zoom and scale: with it and OpenMap both on, the map and Blizzard's quest areas can jump while zooming. Turn one of them off if you see that.",
+  "where": [
+   "Map/Window.lua:222"
   ]
  },
  {
@@ -2337,7 +2343,7 @@
   "en": "Reset size and place",
   "where": [
    "Map/Panel.lua:1582",
-   "Map/Window.lua:587"
+   "Map/Window.lua:593"
   ]
  },
  {
@@ -2380,7 +2386,7 @@
  {
   "en": "Scales the whole windowed map. Drag either of its bottom corners to change its width and height, and its title bar to move it.",
   "where": [
-   "Map/Window.lua:576"
+   "Map/Window.lua:582"
   ]
  },
  {
@@ -2721,7 +2727,7 @@
   "where": [
    "Map/Dungeons.lua:578",
    "Map/Panel.lua:135",
-   "Map/Window.lua:429"
+   "Map/Window.lua:435"
   ]
  },
  {
@@ -2941,7 +2947,7 @@
  {
   "en": "When maximized, the map takes the screen's whole width instead of keeping Blizzard's shape with bars at the sides.",
   "where": [
-   "Map/Window.lua:583"
+   "Map/Window.lua:589"
   ]
  },
  {

@@ -539,5 +539,6 @@
  "Send new pins to group": "Invia i segnalini al gruppo",
  "A pin you drop goes to your party or raid once its card is closed (those with OpenMap are asked whether to add it).": "Un segnalino che piazzi va al tuo gruppo o alla tua incursione quando ne chiudi la scheda (a chi ha OpenMap viene chiesto se aggiungerlo).",
  "Auto-add group's pins": "Aggiungi quelli del gruppo",
- "Map pins your party or raid shares with you are added at once, without asking.": "I segnalini che il tuo gruppo o la tua incursione condividono con te vengono aggiunti subito, senza chiedere."
+ "Map pins your party or raid shares with you are added at once, without asking.": "I segnalini che il tuo gruppo o la tua incursione condividono con te vengono aggiunti subito, senza chiedere.",
+ "MapUtils also changes the world map's zoom and scale: with it and OpenMap both on, the map and Blizzard's quest areas can jump while zooming. Turn one of them off if you see that.": "MapUtils cambia anche lo zoom e la scala della mappa del mondo: con esso e OpenMap attivi, la mappa e le aree delle missioni di Blizzard possono saltare durante lo zoom. Disattivane uno se succede."
 }

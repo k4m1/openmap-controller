@@ -539,5 +539,6 @@
  "Send new pins to group": "Отправлять метки группе",
  "A pin you drop goes to your party or raid once its card is closed (those with OpenMap are asked whether to add it).": "Поставленная метка отправляется вашей группе или рейду, когда закрывается её карточка (тем, у кого есть OpenMap, будет предложено добавить метку).",
  "Auto-add group's pins": "Метки группы без вопроса",
- "Map pins your party or raid shares with you are added at once, without asking.": "Метки на карте, которыми с вами делится группа или рейд, добавляются сразу, без вопроса."
+ "Map pins your party or raid shares with you are added at once, without asking.": "Метки на карте, которыми с вами делится группа или рейд, добавляются сразу, без вопроса.",
+ "MapUtils also changes the world map's zoom and scale: with it and OpenMap both on, the map and Blizzard's quest areas can jump while zooming. Turn one of them off if you see that.": "MapUtils тоже меняет масштаб карты мира: когда включены и он, и OpenMap, карта и области заданий Blizzard могут прыгать при масштабировании. Если вы это видите, отключите один из них."
 }

@@ -539,5 +539,6 @@
  "Send new pins to group": "新標記傳送給隊伍",
  "A pin you drop goes to your party or raid once its card is closed (those with OpenMap are asked whether to add it).": "放置的標記會在關閉其卡片時傳送給你的隊伍或團隊（有 OpenMap 的人會被詢問是否加入）。",
  "Auto-add group's pins": "自動加入隊伍的標記",
- "Map pins your party or raid shares with you are added at once, without asking.": "你的隊伍或團隊與你分享的地圖標記會立即加入，不再詢問。"
+ "Map pins your party or raid shares with you are added at once, without asking.": "你的隊伍或團隊與你分享的地圖標記會立即加入，不再詢問。",
+ "MapUtils also changes the world map's zoom and scale: with it and OpenMap both on, the map and Blizzard's quest areas can jump while zooming. Turn one of them off if you see that.": "MapUtils 也會改變世界地圖的縮放與比例：與 OpenMap 同時啟用時，縮放地圖時地圖和暴雪的任務區域可能會跳動。如果出現這種情況，請關閉其中一個。"
 }

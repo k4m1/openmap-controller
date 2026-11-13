@@ -539,5 +539,6 @@
  "Send new pins to group": "Neue an Gruppe senden",
  "A pin you drop goes to your party or raid once its card is closed (those with OpenMap are asked whether to add it).": "Eine gesetzte Markierung geht an Eure Gruppe oder Euren Schlachtzug, sobald ihre Karte geschlossen wird (wer OpenMap hat, wird gefragt, ob er sie hinzufügen möchte).",
  "Auto-add group's pins": "Gruppe: ohne Nachfrage",
- "Map pins your party or raid shares with you are added at once, without asking.": "Kartenmarkierungen, die Eure Gruppe oder Euer Schlachtzug mit Euch teilt, werden sofort hinzugefügt, ohne Nachfrage."
+ "Map pins your party or raid shares with you are added at once, without asking.": "Kartenmarkierungen, die Eure Gruppe oder Euer Schlachtzug mit Euch teilt, werden sofort hinzugefügt, ohne Nachfrage.",
+ "MapUtils also changes the world map's zoom and scale: with it and OpenMap both on, the map and Blizzard's quest areas can jump while zooming. Turn one of them off if you see that.": "MapUtils ändert ebenfalls Zoom und Maßstab der Weltkarte: Sind es und OpenMap beide an, können die Karte und Blizzards Questgebiete beim Zoomen springen. Schalte eines davon aus, falls du das siehst."
 }

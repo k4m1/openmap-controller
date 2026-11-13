@@ -215,6 +215,12 @@ function mod:SetupWindow(worldMap)
 			ns:Print(L["Enhance QoL: if its Mover > World Map is on, turn it off. It and OpenMap both size the map, and the map's scale goes wrong."])
 		end
 	end
+	-- MapUtils hooks the map's zoom too (its extra zoom steps, its own scale): with both, Blizzard's quest
+	-- areas jumped back and forth as the map zoomed (a player's report, #160). Said once
+	if loaded and not mod.db.mapUtilsNoted and loaded("MapUtils") then
+		mod.db.mapUtilsNoted = true
+		ns:Print(L["MapUtils also changes the world map's zoom and scale: with it and OpenMap both on, the map and Blizzard's quest areas can jump while zooming. Turn one of them off if you see that."])
+	end
 	grip = {}
 	-- With Move Any, leave position, scale and title bar to it; resizing is set up below.
 	if not moveAny then

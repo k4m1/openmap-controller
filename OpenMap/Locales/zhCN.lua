@@ -276,6 +276,7 @@ L["Map pins your group, guild or a player shares with you: you're asked whether 
 L["Map pins your party or raid shares with you are added at once, without asking."] = "你的小队或团队与你分享的地图标记会立即添加，不再询问。"
 L["Map pins: Ctrl-C to copy, then paste them anywhere (another player's OpenMap: Pins, Import)."] = "地图标记：按Ctrl+C复制，然后粘贴到任何地方（其他玩家的OpenMap：标记 → 导入）。"
 L["Map size"] = "地图大小"
+L["MapUtils also changes the world map's zoom and scale: with it and OpenMap both on, the map and Blizzard's quest areas can jump while zooming. Turn one of them off if you see that."] = "MapUtils 也会改变世界地图的缩放与比例：与 OpenMap 同时启用时，缩放地图时地图和暴雪的任务区域可能会跳动。如果出现这种情况，请关闭其中一个。"
 L["Maps painted by hand"] = "手绘地图"
 L["Mark"] = "团队标记"
 L["Medium"] = "中"
