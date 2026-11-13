@@ -527,6 +527,68 @@ class GroupPinTests(unittest.TestCase):
             assert(#ERRORS == 0, ERRORS[1])
         """)
 
+    def test_same_map_position_gap_keeps_native_outline(self):
+        self._setup_native_map()
+        self.lua.execute("""
+            local position = C_Map.GetPlayerMapPosition
+            local missing = false
+            C_Map.GetBestMapForUnit = function() return 4 end
+            C_Map.GetPlayerMapPosition = function(id, unit)
+                if id == 4 then return roster[unit] end
+                if missing and unit == "party1" then return end
+                return position(id, unit)
+            end
+            worldMap:Show()
+            RunOnUpdate(.016)
+            local ring, fallback = ringFrame, group.pins[1]
+            local units = ring.units
+            missing = true
+            NOW = NOW + .501
+            RunOnUpdate(.501)
+            assert(ring:IsShown() and ring.units == units and #group.pins == 1 and group.pins[1] == fallback)
+            missing = false
+            NOW = NOW + .021
+            RunOnUpdate(.021)
+            assert(ring:IsShown() and ring.units == units and #group.pins == 1 and group.pins[1] == fallback)
+            assert(#ERRORS == 0, ERRORS[1])
+        """)
+
+    def test_same_map_position_retries_expire_independently(self):
+        self._setup_native_map()
+        self.lua.execute("""
+            C_Map.GetMapRectOnMap = function(id)
+                if id == 3 then return 0, .5, 0, .5 end
+                return 0, 1, 0, 1
+            end
+            local positions = { party1 = first, party2 = second }
+            C_Map.GetBestMapForUnit = function() return 4 end
+            C_Map.GetPlayerMapPosition = function(id, unit)
+                if id == 3 then return positions[unit] end
+                if id == 4 then return roster[unit] end
+            end
+            local function advance(elapsed)
+                NOW = NOW + elapsed
+                RunOnUpdate(elapsed)
+            end
+            worldMap:Show()
+            advance(.016)
+            local ring = ringFrame
+            assert(#ring.units == 2 and #group.pins == 0)
+            positions.party1 = nil
+            advance(.501)
+            assert(#ring.units == 2 and #group.pins == 0)
+            advance(.08)
+            positions.party2 = nil
+            advance(.02)
+            advance(.005)
+            assert(#ring.units == 1 and ring.units[1] == "party2")
+            assert(#group.pins == 1 and group.pins[1].unit == "party1")
+            second.x = .7 -- its other map now proves it is outside the host
+            advance(.021)
+            assert(not ring:IsShown() and #group.pins == 2)
+            assert(#ERRORS == 0, ERRORS[1])
+        """)
+
     def test_rejected_native_map_keeps_stitched_pins(self):
         self._setup_native_map(reject_map=True)
         self.lua.execute("""

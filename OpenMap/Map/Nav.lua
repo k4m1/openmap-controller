@@ -410,6 +410,7 @@ local RING_SIZE, RING_GAP_SIZE = 19, 15
 local ROUGH_ALPHA = 0.55            -- the dot of someone known only by zone
 local ROUGH_SPREAD = 0.006          -- world (normalized): between those known only by zone, in the same zone
 
+local RING_RETRY_WINDOW = 0.1
 local nativeRings, nativeRingsUnavailable, ringHandoff
 
 local function HideNativeRings()
@@ -578,12 +579,19 @@ local function UpdateGroupPin(pin, unit, u, v, zone)
 	return pin
 end
 
-local function KeepRingDuringHandoff(unit, host, id)
-	if not ringHandoff or ringHandoff.members[unit] ~= id then return false end
+local function RingRetryDeadline(unit, host, id, previous, now, handoffDeadline)
+	if not previous or previous.id ~= id then return end
+	-- Keep the deadline through repeated misses. An exact position clears it.
+	local expires = previous.expires or now + RING_RETRY_WINDOW
+	if handoffDeadline then expires = math.min(expires, handoffDeadline) end
+	if expires <= now then return end
 	local u, v = UnitWorld(unit)
-	if not u then return true end
-	local l, r, t, b = S.Rect(host)
-	return l and u >= l and u <= r and v >= t and v <= b
+	if u then
+		local l, r, t, b = S.Rect(host)
+		if not l or u < l or u > r or v < t or v > b then return end
+	end
+	rosterWait = math.min(rosterWait, 0.02, expires - now)
+	return expires
 end
 
 local function RefreshGroup(afterMapChange)
@@ -599,12 +607,18 @@ local function RefreshGroup(afterMapChange)
 		return
 	end
 	local host = not padView and mod.HostMap() or nil
-	if ringHandoff and (ringHandoff.host ~= host or GetTime() >= ringHandoff.expires) then ringHandoff = nil end
+	local now = GetTime()
+	if ringHandoff and (ringHandoff.host ~= host or now >= ringHandoff.expires) then ringHandoff = nil end
 	local raid = IsInRaid()
 	local stockPin = NativeGroupPin(host)
 	if afterMapChange and ringHandoff and not stockPin then
 		HideNativeRings()
 		return
+	end
+	local previous = nativeRings and nativeRings.host == host and nativeRings.members
+	local handoffDeadline
+	if not previous and ringHandoff then
+		previous, handoffDeadline = ringHandoff.members, ringHandoff.expires
 	end
 	local members, eligible, units, roster = {}, {}, {}, {}
 	for i = 1, raid and 40 or 4 do
@@ -614,14 +628,15 @@ local function RefreshGroup(afterMapChange)
 			if stockPin then
 				local x, y = UnitMapPosition(unit, host)
 				local onMap = x and x >= 0 and x <= 1 and y >= 0 and y <= 1
-				if onMap or (not x and ringHandoff and ringHandoff.members[unit]) then
+				local prior = not x and previous and previous[unit]
+				if onMap or prior then
 					local guid = Safe.Call(UnitGUID, unit)
 					local id = guid or unit
-					if onMap or KeepRingDuringHandoff(unit, host, id) then
-						eligible[unit] = id
+					local expires = prior and RingRetryDeadline(unit, host, id, prior, now, handoffDeadline)
+					if onMap or expires then
+						eligible[unit] = { id = id, expires = expires or nil }
 						units[#units + 1] = unit
 						roster[#roster + 1] = unit .. "=" .. (guid or "")
-						if not onMap then rosterWait = math.min(rosterWait, 0.02) end
 					end
 				end
 			end
@@ -684,7 +699,7 @@ local function RefreshNav()
 	local host = mod.HostMap()
 	if host and host ~= S.WORLD and nativeRings and nativeRings.host ~= host and nativeRings.members then
 		-- A native dot can already be on the new map while the Lua position catches up.
-		ringHandoff = { host = host, members = nativeRings.members, expires = GetTime() + 0.1 }
+		ringHandoff = { host = host, members = nativeRings.members, expires = GetTime() + RING_RETRY_WINDOW }
 	end
 	if map:IsShown() then RefreshGroup(true) end
 	rosterWait = 0
