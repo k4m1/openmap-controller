@@ -360,9 +360,9 @@ Fed the view (centre, half extents, zoom) on every pan and zoom (`S.SetView`):
   file) and `Fishing.lua` (the zones' fishing levels, from cMaNGOS's classic-db, see the file),
   `Labels.lua` and `Banners.lua` (measured or traced on the art), and the placement of
   Gilneas' map in `Gaps.lua`'s `art` (from Mists of Pandaria Classic's tables, which still place
-  it; the others are the same drawings as Forever's own zone maps, and go where those do). Dungeon levels come from the game's group finder (`tools/map-data/build.py`): one level
-  each, shown as a range five past it, the span WoW Forever's own list gives its new dungeons, whose
-  ranges are Forever's (cited in the script). Bosses are the game's `DungeonEncounter` table.
+  it; the others are the same drawings as Forever's own zone maps, and go where those do). Dungeon level ranges come from the game's Group Finder
+  (`GroupFinderActivity`, by map and wing; `tools/map-data/build.py`), so a rebuild for a new build keeps
+  them current; a dungeon it doesn't list takes the dungeon finder's one level. Bosses are the game's `DungeonEncounter` table.
   Dungeon maps (`DungeonMaps.lua`): each instance's floors, their names and wings from Mists of
   Pandaria Classic's map tables (its dungeon art is the same files as Forever's), every tile checked
   in the install (`tools/map-dungeons/build.py`); Forever's own new dungeons have no map art, so

@@ -11,6 +11,12 @@
   - **Auto-add group's pins**: pins your party or raid shares are added without asking.
     By diegodiaz1256.
 
+### Fixed
+
+- **Dungeon level ranges**: the dungeons' levels on the map are now the ones the game's Group Finder
+  gives (each Scarlet Monastery and Dire Maul wing its own); they were an old level each, five levels
+  wide, and some were far off: Razorfen Kraul showed 24-29 for a dungeon of 29-38 (#201). By ConfusionOrb221.
+
 ## v0.8.8 (2026-11-13)
 
 ### Fixed
