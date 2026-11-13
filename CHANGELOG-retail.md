@@ -19,6 +19,18 @@
 
 ### Fixed
 
+- **Quests from the tracker open on their details**: the first click on a tracked quest opened the
+  map on the quest list; it shows the quest's text now (#224).
+
+- **The map cooler on your graphics card**: OpenMap's "Map frame rate cap" is now 60 by default (and
+  set to 60 once for everyone): a still map was drawn as fast as the card could go (#233). Turn it off
+  in Options if you'd rather.
+
+- **Fade while moving fades while you steer with the mouse**: the hidden cursor's last place over the
+  map held it solid, so it hardly ever faded (#69).
+
+- **Resizing the window keeps it where it is**: it could jump to the screen's bottom left (#241).
+
 - **City names in your language**: Thunder Bluff's and Darnassus' name banners showed in English on
   other languages' clients; the zone map's own banner, in the client's language, is shown there now (#47).
 
