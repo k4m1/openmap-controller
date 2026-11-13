@@ -3,7 +3,7 @@
 #   OpenMap/Media/Textures/Forever/MapDungeonDrawn/<mapID>_<n>.tga   the picture in Blizzard's dungeon map
 #                                       (<drawing>_<n>.tga for one originally packaged by name)
 #                                       layout: 1002 x 668 in 4 x 3 tiles of 256 px (Map/Dungeons.lua's)
-#   OpenMap/Data/DungeonDrawn.lua       per instance: its floor's tiles and who drew it
+#   OpenMap/Data/DungeonDrawn.lua       per instance: its floors' tiles (and names) and who drew them
 #
 # usage: python -P tools/map-dungeons/drawn.py
 import os, sys
@@ -19,13 +19,24 @@ OUT = os.path.join(clients.tex("forever"), "MapDungeonDrawn")   # (Forever's own
 PIC_W, PIC_H = 1002, 668
 
 # instance mapID (Data/Places.lua's) -> (the drawing, its name, who drew it); a dungeon the game's
-# tables have no mapID for yet (Places.lua's 0) by its name instead, as Places.lua spells it
+# tables have no mapID for yet (Places.lua's 0) by its name instead, as Places.lua spells it. One of
+# more than one floor: a list of (the drawing, the floor's name) in place of the drawing; its first
+# floor's tiles are named as a one-floor dungeon's, the others' by their drawing
 DRAWN = {
-    2959: ("city-of-dalaran.png", "City of Dalaran", "Santiago Reyes"),
+    2959: ([("city-of-dalaran.jpg", "City of Dalaran"), ("dalaran-the-underbelly.jpg", "The Underbelly")],
+           "City of Dalaran", "Santiago Reyes"),
     2970: ("the-drowned-city.jpg", "The Drowned City", "Santiago Reyes"),
     2998: ("excavation-site-wetlands.png", "Excavation Site: Wetlands", "Santiago Reyes"),
     2999: ("ruins-of-lordaeron.png", "Ruins of Lordaeron", "Santiago Reyes"),
-    3001: ("shapers-terrace.webp", "Shaper's Terrace", "Santiago Reyes"),
+    2974: ([("blackmaw-hold.jpg", "Blackmaw Grove"),
+            ("blackmaw-hold-festering-grotto.jpg", "Festering Grotto"),
+            ("blackmaw-hold-depths-of-the-fallen-grove.jpg", "Depths of the Fallen Grove"),
+            ("blackmaw-hold-depths-of-the-elders.jpg", "Depths of the Elders"),
+            ("blackmaw-hold-depths-of-the-burrow.jpg", "Depths of the Burrow"),
+            ("blackmaw-hold-depths-of-forbidden-magic.jpg", "Depths of Forbidden Magic")],
+           "Blackmaw Hold", "Santiago Reyes"),
+    3001: ([("shapers-terrace.jpg", "Shaper's Terrace"), ("prismatic-talus.jpg", "Prismatic Talus")],
+           "Shaper's Terrace", "Santiago Reyes"),
     3039: ("kroldok-stronghold.webp", "Krol'dok Stronghold", "Santiago Reyes"),
     3065: ("hall-of-thanes.png", "The Hall of Thanes", "Santiago Reyes"),
 }
@@ -54,20 +65,23 @@ def main():
         "ns.MapDungeonDrawn = {",
     ]
     for mid, (art, name, credit) in sorted(DRAWN.items(), key=lambda kv: (isinstance(kv[0], str), str(kv[0]))):
-        stem = art.rsplit(".", 1)[0] if isinstance(mid, str) or mid in NAME_STEM_IDS else str(mid)
-        im = Image.open(os.path.join(ART, art)).convert("RGB").resize((PIC_W, PIC_H), Image.LANCZOS)
-        page = Image.new("RGB", (1024, 768))
-        page.paste(im, (0, 0))
-        tiles = []
-        for n in range(12):
-            col, row = n % 4, n // 4
-            f = "%s_%d" % (stem, n + 1)
-            page.crop((col * 256, row * 256, col * 256 + 256, row * 256 + 256)).save(os.path.join(OUT, f + ".tga"))
-            tiles.append("P .. " + lua_str(f))
+        floors = art if isinstance(art, list) else [(art, None)]
         lines.append("\t[%s] = { -- %s" % (mid if isinstance(mid, int) else lua_str(mid), name))
-        lines.append("\t\t{ tiles = { %s }, credit = %s }," % (", ".join(tiles), lua_str(credit)))
+        for i, (pic, floor) in enumerate(floors):
+            stem = pic.rsplit(".", 1)[0] if i > 0 or isinstance(mid, str) or mid in NAME_STEM_IDS else str(mid)
+            im = Image.open(os.path.join(ART, pic)).convert("RGB").resize((PIC_W, PIC_H), Image.LANCZOS)
+            page = Image.new("RGB", (1024, 768))
+            page.paste(im, (0, 0))
+            tiles = []
+            for n in range(12):
+                col, row = n % 4, n // 4
+                f = "%s_%d" % (stem, n + 1)
+                page.crop((col * 256, row * 256, col * 256 + 256, row * 256 + 256)).save(os.path.join(OUT, f + ".tga"))
+                tiles.append("P .. " + lua_str(f))
+            lines.append("\t\t{ %stiles = { %s }, credit = %s }," % (
+                "name = %s, " % lua_str(floor) if floor else "", ", ".join(tiles), lua_str(credit)))
         lines.append("\t},")
-        print("%s: 12 tiles, by %s" % (name, credit))
+        print("%s: %d floor(s) of 12 tiles, by %s" % (name, len(floors), credit))
     lines.append("}")
     with open(os.path.join(clients.data("forever"), "DungeonDrawn.lua"), "w", encoding="utf-8", newline="\n") as fh:
         fh.write("\n".join(lines) + "\n")

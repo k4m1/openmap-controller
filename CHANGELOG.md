@@ -17,7 +17,17 @@
   - **Auto-add group's pins**: pins your party or raid shares are added without asking.
     By diegodiaz1256.
 
+- **A map of Blackmaw Hold**, drawn by Santiago Reyes: all six of its floors, from Blackmaw Grove
+  and the Festering Grotto down to the Depths of Forbidden Magic (the floor list at the top of the
+  dungeon's map, or its arrows). (New textures: restart the game.)
+
 ### Improved
+
+- **City of Dalaran's map is Santiago Reyes's updated version, with the Underbelly**, where the
+  dungeon starts, as a second floor (#220).
+
+- **Shaper's Terrace's map is Santiago Reyes's final version, with the Prismatic Talus** as a
+  second floor.
 
 - **Questie's quest icons in front**: a "!" or "?" is no longer hidden under a flight master or a
   dungeon's icon; Questie's townsfolk stay under OpenMap's icons (#92).
