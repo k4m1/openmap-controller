@@ -1273,6 +1273,22 @@ local function Setup()
 			if b and b.at == GetTime() and active and map:IsShown() then mod.ShowNow(b[1], b[2], b[3]) end
 		end)
 	end
+	-- a quest's details (the tracker's click opens the map, then them): Blizzard closes them when its map
+	-- changes, and the view kept from the last opening could have the map underneath follow it off the
+	-- quest's map (the tracker's first click showed the quest list: #224). So a view that would leave
+	-- their map shows that map whole instead
+	if QuestMapFrame_ShowQuestDetails then
+		hooksecurefunc("QuestMapFrame_ShowQuestDetails", function()
+			local d = QuestMapFrame and QuestMapFrame.DetailsFrame
+			local id = d and d.questMapID
+			if not (active and not anim and id and id ~= 0 and id == map:GetMapID() and map:IsShown()) then return end
+			local u, v, zoom = View()
+			if u and PickMap(u, v, zoom, id) ~= id then
+				local aw, ah = S.ArtSize(id)
+				if aw then SetView(math.min(sc:GetWidth() / aw, sc:GetHeight() / ah), 0.5, 0.5) end
+			end
+		end)
+	end
 
 	local dp = CreateFromMixins(MapCanvasDataProviderMixin)
 	dp.OnCanvasScaleChanged = Ours("scale changed", ApplyZoom)
