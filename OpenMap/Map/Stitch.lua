@@ -821,6 +821,21 @@ function S.AddPin(set, u, v, look, data)
 	return pin
 end
 
+-- Move the existing anchor so the button keeps its mouseover state.
+function S.MovePin(set, pin, u, v)
+	if pin.u == u and pin.v == v then return end
+	local rec = dynamic[pin.anchor]
+	rec[2], rec[3] = u * W, v * H
+	PlaceRecord(rec)
+	pin.u, pin.v = u, v
+
+	local cell = PinCell(set, u, v)
+	if cell ~= pin:GetParent() then
+		pin:SetParent(cell)
+		pin:SetFrameLevel(set.frame:GetFrameLevel())
+	end
+end
+
 -- a line between two world points (normalized), `thickness` px on screen
 function S.AddLine(set, u1, v1, u2, v2, thickness, r, g, b, a, texture)
 	local line = tremove(set.linePool) or set.frame:CreateLine(nil, "ARTWORK")
@@ -875,19 +890,33 @@ function S.AddDot(set, u, v, size, look, r, g, b, a, parent)
 	return dot
 end
 
-function S.ClearPinSet(set)
-	for _, pin in ipairs(set.pins) do
+do
+	local function RecyclePin(set, pin)
 		pin:Hide()
 		pin:ClearAllPoints()
 		DropAnchor(pin.anchor)
 		set.pinPool[#set.pinPool + 1] = pin
 	end
-	for _, line in ipairs(set.lines) do
-		line:Hide()
-		set.linePool[#set.linePool + 1] = line
+
+	function S.RemovePin(set, pin)
+		for i, active in ipairs(set.pins) do
+			if active == pin then
+				RecyclePin(set, pin)
+				tremove(set.pins, i)
+				return
+			end
+		end
 	end
-	for _, a in ipairs(set.anchors) do DropAnchor(a) end
-	wipe(set.pins) wipe(set.lines) wipe(set.anchors)
+
+	function S.ClearPinSet(set)
+		for _, pin in ipairs(set.pins) do RecyclePin(set, pin) end
+		for _, line in ipairs(set.lines) do
+			line:Hide()
+			set.linePool[#set.linePool + 1] = line
+		end
+		for _, a in ipairs(set.anchors) do DropAnchor(a) end
+		wipe(set.pins) wipe(set.lines) wipe(set.anchors)
+	end
 end
 
 -- a set with `build` makes its pins the first time it shows
