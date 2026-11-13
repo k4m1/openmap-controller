@@ -27,8 +27,8 @@
 -- own tooltips) and Questie's mob paths, a dungeon's map in OpenMap's own view of it (floors and side
 -- panel), OpenMap's menu, the pins' list and cards, the quill, and Report a problem (without its note
 -- step: the game's popups run the Gamepad UI's own code), and the quests in your log (Quests.lua: every
--- one is OpenMap's icon here, Blizzard's pins being on its map under this view, unseen). Not yet: the
--- quest log's quest areas.
+-- one is OpenMap's icon here, Blizzard's pins being on its map under this view, unseen), with the
+-- "!" of the ones to start in the zone Blizzard's map is on. Not yet: the quest log's quest areas.
 --------------------------------------------------------------------------------
 
 local _, ns = ...

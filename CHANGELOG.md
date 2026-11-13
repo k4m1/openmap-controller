@@ -9,8 +9,9 @@
   OpenMap's own (Quests.lua) left out the zone that map is on, as Blizzard drew it. Every quest in
   your log is now OpenMap's icon there, at any zoom, in every zone (with "Quests from every zone" off:
   the zone Blizzard's map is on). A tracks the quest and zooms to it; unlike on the usual map it doesn't
-  open Blizzard's quest log, which the controller view leaves alone. Quest areas, and the "!" of
-  quests you haven't taken yet, aren't on it yet (#225).
+  open Blizzard's quest log, which the controller view leaves alone. The "!" of the quests you can
+  start in the zone Blizzard's map is on are there too, with the quest's name and its quest line on
+  the tooltip. Quest areas (the shaded ones) aren't on it yet (#225).
 
 ## v0.8.7 (2026-11-12)
 
