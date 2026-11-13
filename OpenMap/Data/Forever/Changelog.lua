@@ -4,6 +4,9 @@
 local _, ns = ...
 
 ns.MapChangelog = {
+	{ version = "Unreleased", date = "", heads = { [1] = "Fixed", }, items = {
+		"|cff6e2c0aParty and raid markers stay steady.|r Group outlines follow Blizzard's dots where the game can place a member, and appear when the map opens. OpenMap's other group dots keep their highlight and tooltip as their positions refresh.",
+	} },
 	{ version = "v0.8.7", date = "2026-11-12", heads = { [1] = "Fixed", }, items = {
 		"|cff6e2c0aQuestie's icons show on the first map you open|r: with Questie 12.8, a map opened on a zone showed none of Questie's icons (their tooltips still came up) until you'd zoomed out to the continent once: icons Questie placed before the map was first opened stayed under its art (#194, #193, #195).",
 	} },
@@ -47,10 +50,5 @@ ns.MapChangelog = {
 		"|cff6e2c0aA dungeon map remembers its tab|r: picking Quests beside the quest log keeps it picked the next time a dungeon's map opens.",
 		"|cff6e2c0aNo more dot in the bottom-left corner of the screen|r after closing the map, or inside a dungeon: the map art OpenMap keeps loaded while the map is closed was drawn there, hundreds of faint copies on one pixel. Found by ryanull24.",
 		"|cff6e2c0aFriends on other numbered realms show on the map|r: Forever's numbered realms of one pool (Realm4, Realm12 ...) count as one realm, so a friend there shows like a friend on yours. They were left out as if on another realm. By TheRayoX.",
-	} },
-	{ version = "v0.8.2", date = "2026-11-08", heads = { [1] = "Improved", [2] = "Fixed", }, items = {
-		"|cff6e2c0aPanning no longer hitches|r: the map set up to 300 textures' files in a single frame where a pan brought new ground into view, and each set is a load and an upload, so that frame showed as a hitch of about 35 ms. It sets 60 a frame now; the art still fades in, a few frames later.",
-		"|cff6e2c0aThe map no longer stalls a moment after it opens|r: since 0.8.0 OpenMap keeps the map's art loaded while it's closed, then let go of it all in one frame a second into the opening, which the game unloaded at once (about a second's freeze). It now lets go of it a little at a time.",
-		"|cff6e2c0aZooming in notch by notch is smooth again|r: since 0.8.1 the blur came back all at once each time the map stopped, one long frame the next wheel notch landed on. It now waits out a pause between notches and comes back a few zones a frame. Questie's mob paths are worked out once the map stops, not on every frame of a zoom.",
 	} },
 }

@@ -491,18 +491,66 @@ local BLIP_GONE = 0.01            -- (a size too small to draw: 0 is taken as th
 local BLIP_UNITS = { player = "playerArrow", party = "group", raid = "group" }
 local blipHidden = setmetatable({}, { __mode = "k" })    -- pin -> { unit = true } sized away
 local blipHooked = setmetatable({}, { __mode = "k" })
+local groupBlipSizes = setmetatable({}, { __mode = "k" })
+local loweredGroupBlips = setmetatable({}, { __mode = "k" })
 local function BlipOff(unit) return mod.db[BLIP_UNITS[unit]] == false end
 local function Locked(pin) return pin:IsProtected() and InCombatLockdown() end
+-- Blizzard's arrow and group dots default to sublevel 7 within the same frame.
+local function LayerGroupBlips(pin)
+	local lowered = active or nil
+	local set = pin.SetPinSubLevel
+	if loweredGroupBlips[pin] == lowered or not set or Locked(pin) then return end
+	local sublevel = lowered and 6 or 7
+	if not pcall(set, pin, "party", sublevel) then return end
+	if not pcall(set, pin, "raid", sublevel) then
+		pcall(set, pin, "party", lowered and 7 or 6)
+		return
+	end
+	loweredGroupBlips[pin] = lowered
+end
+
+local function ScaleGroupBlips(pin)
+	if not pin.SetPinSize or Locked(pin) then return end
+	if active and BlipOff("party") then
+		groupBlipSizes[pin] = nil
+		return
+	end
+	local applied = groupBlipSizes[pin]
+	local factor = active and tonumber(mod.db.iconScale) or 1
+	if factor <= 0 then factor = 1 end
+	if factor == 1 and not applied then return end
+	local scale = map.GetCanvasScale and map:GetCanvasScale() or 1
+	if scale <= 0 or (applied and applied.factor == factor and applied.scale == scale) then return end
+	local provider = pin.dataProvider
+	local sizes = provider and provider.GetUnitPinSizesTable and provider:GetUnitPinSizesTable()
+	if not sizes or not sizes.party or not sizes.raid then return end
+	if not pcall(pin.SetPinSize, pin, "party", sizes.party * factor / scale) then return end
+	if not pcall(pin.SetPinSize, pin, "raid", sizes.raid * factor / scale) then
+		local previous = applied and applied.factor / applied.scale or 1 / scale
+		pcall(pin.SetPinSize, pin, "party", sizes.party * previous)
+		return
+	end
+	groupBlipSizes[pin] = factor ~= 1 and { factor = factor, scale = scale } or nil
+end
+
+-- The rim uses the size that could be applied to the stock dot.
+function mod.NativeGroupIconScale(pin)
+	local applied = groupBlipSizes[pin]
+	return applied and applied.factor or 1
+end
+
 local function Blips(pin)
 	local ping = type(pin.StartPlayerPing) == "function" and type(pin.StopPlayerPing) == "function"
 	if not blipHooked[pin] then
 		blipHooked[pin] = true
 		if pin.SetPinSize and type(pin.SynchronizePinSizes) == "function" then
 			hooksecurefunc(pin, "SynchronizePinSizes", function(self)
+				groupBlipSizes[self] = nil -- Blizzard just restored the provider's default sizes
 				if Locked(self) then return end
 				for unit in pairs(BLIP_UNITS) do
 					if BlipOff(unit) then pcall(self.SetPinSize, self, unit, BLIP_GONE) end
 				end
+				ScaleGroupBlips(self)
 			end)
 		end
 		if ping then
@@ -528,6 +576,7 @@ local function Blips(pin)
 			hidden[unit] = nil
 		end
 	end
+	ScaleGroupBlips(pin)
 end
 
 local function RaisePlayer()
@@ -536,9 +585,11 @@ local function RaisePlayer()
 		if not Locked(pin) then
 			if pin:GetFrameLevel() ~= level then pin:SetFrameLevel(level) end
 			Blips(pin)
+			LayerGroupBlips(pin)
 		end
 	end
-	S.RaiseArrow(level)
+	S.RaiseArrow(level + 1)
+	if mod.RefreshNativeRingLayout then mod.RefreshNativeRingLayout() end
 end
 
 local ticker = CreateFrame("Frame")
@@ -749,10 +800,13 @@ local function Attach(mapID)
 		sc:SetScalingMode("SCALING_MODE_LINEAR")
 		if map:IsShown() then ticker:Show() end
 	else
+		for pin in pairs(groupBlipSizes) do ScaleGroupBlips(pin) end
+		for pin in pairs(loweredGroupBlips) do LayerGroupBlips(pin) end
 		sc:SetMouseWheelZoomMode(wheelMode)
 		sc:SetScalingMode(scalingMode)
 		S.SetPlayer(nil)
 		ticker:Hide()
+		if mod.RefreshNativeRingLayout then mod.RefreshNativeRingLayout() end
 		anim = nil
 		if mod.IsPainting and mod:IsPainting() then mod:TogglePaint(false) end
 		if mod.IsSketching and mod:IsSketching() then mod:ToggleSketch(false) end

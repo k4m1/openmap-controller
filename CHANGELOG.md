@@ -1,5 +1,13 @@
 # OpenMap changelog
 
+## Unreleased
+
+### Fixed
+
+- **Party and raid markers stay steady.** Group outlines follow Blizzard's dots where the game can
+  place a member, and appear when the map opens. OpenMap's other group dots keep their highlight
+  and tooltip as their positions refresh.
+
 ## v0.8.7 (2026-11-12)
 
 ### Fixed
