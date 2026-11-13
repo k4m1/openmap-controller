@@ -13,6 +13,10 @@
 
 ### Fixed
 
+- **Zygor's map line stays thick on the stitched map**: Zygor's route line (and its dots and waypoint
+  icons) shrank to a thin grey line zoomed in and grew far too wide zoomed out, as Zygor sizes them for
+  Blizzard's zoom range; they now stay the same size on screen at every zoom (#218). By rogeriocamorim.
+
 - **Dungeon level ranges**: the dungeons' levels on the map are now the ones the game's Group Finder
   gives (each Scarlet Monastery and Dire Maul wing its own); they were an old level each, five levels
   wide, and some were far off: Razorfen Kraul showed 24-29 for a dungeon of 29-38 (#201). By ConfusionOrb221.

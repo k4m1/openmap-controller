@@ -124,7 +124,7 @@
  {
   "en": "A bar along the map's foot: your position, and the zone and position under the cursor.",
   "where": [
-   "Map/Extras.lua:1111"
+   "Map/Extras.lua:1137"
   ]
  },
  {
@@ -744,7 +744,7 @@
  {
   "en": "Coordinates",
   "where": [
-   "Map/Extras.lua:1110",
+   "Map/Extras.lua:1136",
    "Map/Panel.lua:300"
   ]
  },
@@ -1172,7 +1172,7 @@
  {
   "en": "Fade while moving",
   "where": [
-   "Map/Extras.lua:1120",
+   "Map/Extras.lua:1146",
    "Map/Panel.lua:1530"
   ]
  },
@@ -1392,7 +1392,7 @@
  {
   "en": "Hovering a zone shows its level range, coloured for your level, and if you know Fishing, the skill at which every cast there lands.",
   "where": [
-   "Map/Extras.lua:1113"
+   "Map/Extras.lua:1139"
   ]
  },
  {
@@ -1429,7 +1429,7 @@
  {
   "en": "How much the map fades while you walk or ride, so you can see where you're going. 0% keeps it solid. It never fades while the mouse is over it.",
   "where": [
-   "Map/Extras.lua:1122"
+   "Map/Extras.lua:1148"
   ]
  },
  {
@@ -1649,7 +1649,7 @@
  {
   "en": "Map frame rate cap",
   "where": [
-   "Map/Extras.lua:1117",
+   "Map/Extras.lua:1143",
    "Map/Panel.lua:1531"
   ]
  },
@@ -1936,7 +1936,7 @@
  {
   "en": "On the map",
   "where": [
-   "Map/Extras.lua:1109",
+   "Map/Extras.lua:1135",
    "Map/Panel.lua:197"
   ]
  },
@@ -2103,7 +2103,7 @@
  {
   "en": "Other addons' icons rest while zooming",
   "where": [
-   "Map/Extras.lua:1114"
+   "Map/Extras.lua:1140"
   ]
  },
  {
@@ -2215,7 +2215,7 @@
  {
   "en": "Questie's icons (and other addons' map icons) are hidden while the map zooms and back as soon as it stops. Each one is laid out again on every frame of a zoom, and with Questie's hundreds that costs a lot of frame rate.",
   "where": [
-   "Map/Extras.lua:1116"
+   "Map/Extras.lua:1142"
   ]
  },
  {
@@ -2676,7 +2676,7 @@
  {
   "en": "The frame rate at most while the map is open (0: off). A big map draws many layers over the whole screen every frame; 60 halves the graphics card's work at 120 fps, for a smooth enough map. The game's own frame rate setting comes back as the map closes.",
   "where": [
-   "Map/Extras.lua:1119"
+   "Map/Extras.lua:1145"
   ]
  },
  {
@@ -3175,7 +3175,7 @@
  {
   "en": "Zone levels",
   "where": [
-   "Map/Extras.lua:1112",
+   "Map/Extras.lua:1138",
    "Map/Panel.lua:299"
   ]
  },
