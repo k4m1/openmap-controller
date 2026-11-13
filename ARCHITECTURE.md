@@ -307,7 +307,9 @@ Fed the view (centre, half extents, zoom) on every pan and zoom (`S.SetView`):
   Blizzard's and secure. The view's own `u, v, zoom` place the canvas (its scale, its offset) and feed
   `S.SetZoom` and `S.SetView` as `WorldMap.lua` does; it answers what the other files ask of the map
   (`mod.Glide`, `ViewNow`, `CursorWorld` ...) and sets up the parts that need no map of their own
-  (flights, pins, the waypoint, the quill, the report, the menu). The controller is read, not bound:
+  (flights, pins, the waypoint, the quill, the report, the menu), and the quests in your log
+  (`Quests.lua`: with the view on, Blizzard's pins for them are on its map under it, unseen, so every quest is
+  OpenMap's icon, the zone that map is on too, and a click doesn't open Blizzard's quest log). The controller is read, not bound:
   the right stick from `C_GamePad` (`mod.PadStickTilt`), Blizzard's cursor where it is, A and X after
   Blizzard's own (on its map underneath, unseen). OpenMap's controls under the cursor are entered and
   pressed through `Gamepad.lua` (`PadControlAt`, `PadPress`, `PadWheelAt`: the right stick as their

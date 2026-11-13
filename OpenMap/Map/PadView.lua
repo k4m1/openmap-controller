@@ -26,7 +26,9 @@
 -- map pins and the waypoint, Questie's townsfolk, every addon's HereBeDragons icons (Questie's with its
 -- own tooltips) and Questie's mob paths, a dungeon's map in OpenMap's own view of it (floors and side
 -- panel), OpenMap's menu, the pins' list and cards, the quill, and Report a problem (without its note
--- step: the game's popups run the Gamepad UI's own code). Not yet: the quest log's quest areas.
+-- step: the game's popups run the Gamepad UI's own code), and the quests in your log (Quests.lua: every
+-- one is OpenMap's icon here, Blizzard's pins being on its map under this view, unseen). Not yet: the
+-- quest log's quest areas.
 --------------------------------------------------------------------------------
 
 local _, ns = ...
@@ -682,6 +684,12 @@ local function Build()
 		local okS, errS = pcall(function() mod:SetupSketch(map) mod:BuildSketch() end)
 		if not okS then diag.panel = "quill: " .. tostring(errS) end
 	end
+	-- the quests in your log (Quests.lua): OpenMap's own icons here, Blizzard's pins on its map under this
+	-- view being unseen
+	if mod.SetupQuests then
+		local okQ, errQ = pcall(mod.SetupQuests, mod, map)
+		if not okQ then diag.panel = "quests: " .. tostring(errQ) end
+	end
 	-- Report a problem (Report.lua): drawn with the quill here, its code in the view
 	if mod.SetupReport then
 		local okR, errR = pcall(mod.SetupReport, mod, map)
@@ -696,6 +704,11 @@ local function Build()
 	if not ok then diag.why = "the look (carried on): " .. tostring(err) end
 	built = true
 	if ok then diag.why = "built" end
+	-- (the quest icons once the view counts as on: Quests.lua asks mod.PadViewOn)
+	if mod.RefreshQuests then
+		local okQ, errQ = pcall(mod.RefreshQuests, mod)
+		if not okQ then diag.panel = "quests: " .. tostring(errQ) end
+	end
 	return true
 end
 

@@ -49,6 +49,7 @@ python -P tools/offline-test/explored.py
 python -P tools/offline-test/chart.py
 python -P tools/offline-test/friends.py
 python -P tools/offline-test/questie.py
+python -P tools/offline-test/quests.py
 python -P tools/offline-test/bosses.py
 ```
 

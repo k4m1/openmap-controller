@@ -5,6 +5,11 @@
 -- underneath became theirs. Here every stitched map's quests (C_QuestLog.GetQuestsOnMap) are
 -- OpenMap's own icons, in the look of Blizzard's (its map legend's); the map underneath keeps
 -- Blizzard's own pins for its quests (and a continent its super-tracked quest's).
+--
+-- In the controller view (PadView.lua) Blizzard's map is under the view, unseen, and so are its pins:
+-- every quest is OpenMap's icon there, the zone Blizzard's map is on too (with "all quests" off, only
+-- that zone's). A click there tracks the quest and zooms to it, but doesn't open Blizzard's quest
+-- log: nothing of Blizzard's map or quest log is changed from OpenMap's code while that view is on.
 --------------------------------------------------------------------------------
 
 local _, ns = ...
@@ -22,8 +27,11 @@ local TURN_IN = { atlas = "UI-QuestPoi-QuestBangTurnIn", texture = "Interface\\G
 local SAME = 0.002              -- world (normalized): one quest's icons this close are one
 local EVERY = 0.5               -- seconds: the quest log changes in bursts
 local NONE = {}
-local set, map, maps
+local set, map, maps, events
 local dirty = false
+
+-- the controller view is the map now (Blizzard's under it, unseen)
+local function PadView() return mod.PadViewOn and mod.PadViewOn() end
 
 -- the maps the quests are read from: the stitched zones and cities (a city's quests are its zone's
 -- too, at the same place: one icon, SAME)
@@ -51,7 +59,7 @@ local function Enter(pin)
 			if text and not finished then GameTooltip:AddLine((_G.QUEST_DASH or "- ") .. text, 1, 1, 1, true) end
 		end
 	end
-	GameTooltip:AddLine((map and map.IsMaximized and map:IsMaximized()) and L["Click: track this quest and zoom to it"]
+	GameTooltip:AddLine((PadView() or (map and map.IsMaximized and map:IsMaximized())) and L["Click: track this quest and zoom to it"]
 		or L["Click: track this quest, zoom to it and show it in the quest log"], 0.6, 0.6, 0.6)
 	GameTooltip:Show()
 end
@@ -71,6 +79,9 @@ local function Click(pin)
 		C_SuperTrack.SetSuperTrackedQuestID(q.id)
 	end
 	if S.GlideToWorld then S.GlideToWorld(pin.u, pin.v, ZOOM_TO) end
+	-- (the controller view: Blizzard's quest log is left as it is, as a dungeon's map is: its details
+	-- would set the pad's buttons from OpenMap's code)
+	if PadView() then return end
 	-- (in combat with the gamepad's UI, Blizzard's quest details would set the pad's buttons from
 	-- OpenMap's code, which combat blocks: they wait, as a dungeon's map does)
 	if mod.PadWaits and mod.PadWaits() then return end
@@ -102,10 +113,19 @@ function mod:RefreshQuests()
 	if not set then return end
 	S.ClearPinSet(set)
 	-- (and as Blizzard's own quests: not with the map's Quest Objectives off, its questPOI)
-	local on = mod.db.allQuests ~= false and mod.IsStitched() and C_QuestLog.GetQuestsOnMap ~= nil
+	local pad = PadView()
+	local all = mod.db.allQuests ~= false
+	local on = (all or pad) and (mod.IsStitched() or pad) and C_QuestLog.GetQuestsOnMap ~= nil
 		and not (GetCVarBool and not GetCVarBool("questPOI"))
 	S.SetPinSetOn(set, on)
 	if not on then return end
+	-- the controller view with "all quests" off: the zone (or city) Blizzard's map is on, whose quests
+	-- no pin of Blizzard's shows there
+	local list = Maps()
+	if pad and not all then
+		local zone = map and map.GetMapID and map:GetMapID()
+		list = zone and S.Rect(zone) and { zone } or NONE
+	end
 	-- the map underneath: Blizzard draws its quests (a continent, only the super-tracked one)
 	local host = mod.HostMap()
 	local hostInfo = host and C_Map.GetMapInfo(host)
@@ -118,7 +138,7 @@ function mod:RefreshQuests()
 	local hl, hr, ht, hb
 	if host then hl, hr, ht, hb = S.Rect(host) end
 	local seen = {}
-	for _, mapID in ipairs(Maps()) do
+	for _, mapID in ipairs(list) do
 		if mapID ~= host then
 			for _, q in ipairs(C_QuestLog.GetQuestsOnMap(mapID) or NONE) do
 				local id = q.questID
@@ -151,7 +171,8 @@ end
 
 function mod:SetupQuests(worldMap)
 	map = worldMap
-	local events = CreateFrame("Frame")
+	if events then return end                   -- (once: its events and hooks)
+	events = CreateFrame("Frame")
 	for _, e in ipairs({ "QUEST_LOG_UPDATE", "QUEST_POI_UPDATE", "QUEST_WATCH_LIST_CHANGED", "SUPER_TRACKING_CHANGED", "CVAR_UPDATE" }) do
 		pcall(events.RegisterEvent, events, e)
 	end
