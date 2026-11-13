@@ -334,6 +334,7 @@ local function Rows()
 	rows[#rows + 1] = { L["Moving about"], tab = "more" }
 	rows[#rows + 1] = optRow(L["Load the zone in view"], "autoSwitch", Icon("Ability_Hunter_Pathfinding"))
 	fromOptions(L["Ctrl-click drops a pin"], "ctrlClickPin", Icon("INV_Misc_Map_01"))
+	fromOptions(L["Follow new pins"], "pinsFollowNew", Icon("INV_Misc_Map_01"))
 	rows[#rows + 1] = { L["Reopen map (choose one)"] }
 	for _, choice in ipairs({ { "player", L["Center on player"] }, { "zoom", L["Center on player, keep zoom"] }, { "inzone", L["Center on your zone"] }, { "always", L["Always remember"] },
 		{ "visible", L["Remember while visible"] } }) do
@@ -344,6 +345,8 @@ local function Rows()
 	end
 	rows[#rows + 1] = { L["Sharing"] }
 	fromOptions(L["Pins others share with you"], "pinsShared", Icon("INV_Misc_Map_01"))
+	fromOptions(L["Send new pins to group"], "pinsShareGroup", Icon("INV_Misc_Map_01"))
+	fromOptions(L["Auto-add group's pins"], "pinsGroupAdd", Icon("INV_Misc_Map_01"))
 	rows[#rows + 1] = optRow(L["Share where you are"], "friendsShare", Icon("Ability_Hunter_EagleEye"))
 	rows[#rows].note = L["Your guild and friends see you"]   -- (a second line: what turning it on means)
 	rows[#rows + 1] = { L["Tools"] }
