@@ -31,6 +31,7 @@ jobs:
       - run: python tools/offline-test/run.py pad
       - run: python tools/offline-test/run.py padmap
       - run: python tools/offline-test/run.py padview
+      - run: python -P tools/offline-test/padwaypoint.py
       - run: python tools/offline-test/navigation.py
       - run: python -P tools/offline-test/player.py
       - run: python -P tools/offline-test/press.py

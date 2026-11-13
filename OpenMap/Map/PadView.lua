@@ -65,7 +65,6 @@ local questieAt = setmetatable({}, { __mode = "k" })   -- icon -> { u, v }: Ques
 local questieShown = {}         -- icon -> true: placed on this view now
 local questieWait = 0
 local PlaceQuestie, QuestieTip -- (below: Apply calls the one, the other the other)
-local ownWaypointAt = -10       -- when this view last set or cleared the waypoint itself (GetTime)
 local overWindow, wheelFrame    -- the pad's cursor over one of OpenMap's windows (its menu ...), and what scrolls there
 local wheelWait = 0
 local stickZoomAt = -10         -- when the right stick last zoomed the view (GetTime)
@@ -212,7 +211,6 @@ local function Step(inward)
 	if inward and mod.PinMode and mod.PinMode() and lastX and mod.DropWaypoint then
 		local cu, cv = WorldAt(Offset(lastX, lastY))
 		mod.SetPinMode(false)
-		ownWaypointAt = GetTime()
 		mod.DropWaypoint(cu, cv)
 		return
 	end
@@ -483,13 +481,11 @@ function Press(pin)
 	-- your map pin: its card, as a click opens it (its note, colour, Follow, Share ...)
 	local p = pin.data
 	if type(p) == "table" and p.id and p.map and p.x and pin.OnClick and mod.SetupPins then
-		ownWaypointAt = GetTime()
 		pcall(pin.OnClick, pin)
 		return
 	end
 	if type(p) == "table" and p.id and p.map and p.x and mod.TrackPoint then
 		local m, x, y = mod.WaypointPoint()
-		ownWaypointAt = GetTime()
 		if m == p.map and x and math.abs(x - p.x) < 1e-3 and math.abs(y - p.y) < 1e-3 then
 			mod.ClearPin()
 		else
@@ -764,26 +760,69 @@ function mod.PadViewDiag()
 		diag.panel or tostring(mod.PanelBuilt and mod.PanelBuilt() or false))
 end
 
--- The waypoint changed. Blizzard's own, the left stick pressed (GamepadTryPlaceWaypoint), goes where its
--- cursor is on its map underneath, not on this view: put again where the cursor is here, on the zone
--- there (as WorldMap.lua does on the usual map). Then the waypoint's icon here
-local function OnWaypoint()
-	if not built then return end
-	if view:IsShown() and GetTime() - ownWaypointAt > 0.5 and lastX and C_Map.HasUserWaypoint
-		and C_Map.GetUserWaypoint and C_Map.HasUserWaypoint() then
-		local point = C_Map.GetUserWaypoint()
-		if point and point.uiMapID == map:GetMapID() then           -- (put on Blizzard's map underneath)
-			local cu, cv = WorldAt(Offset(lastX, lastY))
-			local chain = S.ChainAt(cu, cv)
-			local zone = chain[#chain]
-			if zone and zone ~= WORLD and (not C_Map.CanSetUserWaypointOnMap or C_Map.CanSetUserWaypointOnMap(zone)) then
-				local l, r, t, b = S.Rect(zone)
-				ownWaypointAt = GetTime()
-				pcall(C_Map.SetUserWaypoint, UiMapPoint.CreateFromCoordinates(zone, (cu - l) / (r - l), (cv - t) / (b - t)))
-			end
-		end
+-- The waypoint. Blizzard's own, the left stick pressed (GamepadTryPlaceWaypoint), goes where its cursor is
+-- on its map underneath, not on this view: it's put again where the cursor is here, on the zone there (as
+-- WorldMap.lua does on the usual map).
+-- Which waypoint is the stick's is read as Blizzard's call ends (PadPressed), not awaited: the game has the
+-- waypoint as soon as it's set (Blizzard's own code reads it back at once, OpenMapToUserWaypoint after
+-- SetUserWaypoint), so the stick's is there then, on Blizzard's map underneath at Blizzard's own cursor.
+-- Another addon's waypoint, set while the map is open, stays where that addon put it, whenever it's set once
+-- Blizzard's call has ended (the view used to take every new waypoint on the map underneath for the stick's,
+-- and move it to the cursor). A waypoint's event only draws its icon again.
+-- (Not told apart: an addon that, told of the stick's waypoint or of its taking off, sets its own inside
+-- Blizzard's call, at Blizzard's cursor to within STICK_NEAR; and a cursor moved inside that call.)
+local STICK_NEAR = 0.005        -- a waypoint this near Blizzard's cursor on its map (0..1) is the one it just set
+
+-- whether the waypoint is on `mapID` at (x, y)
+local function WaypointAt(mapID, x, y)
+	if not (C_Map.HasUserWaypoint and C_Map.GetUserWaypoint and C_Map.HasUserWaypoint()) then return false end
+	local point = C_Map.GetUserWaypoint()
+	local pos = point and point.uiMapID == mapID and point.position
+	if not pos then return false end
+	local wx, wy = ns.Safe.XY(pos)
+	if type(wx) ~= "number" or type(wy) ~= "number" or ns.Safe.IsSecret(wx) or ns.Safe.IsSecret(wy) then return false end
+	return math.abs(wx - x) <= STICK_NEAR and math.abs(wy - y) <= STICK_NEAR
+end
+
+-- the stick's waypoint put again where this view's cursor is
+local function PutAgain()
+	if not (view:IsShown() and lastX) then return end
+	local cu, cv = WorldAt(Offset(lastX, lastY))
+	local chain = S.ChainAt(cu, cv)
+	local zone = chain[#chain]
+	if zone and zone ~= WORLD and (not C_Map.CanSetUserWaypointOnMap or C_Map.CanSetUserWaypointOnMap(zone)) then
+		local l, r, t, b = S.Rect(zone)
+		pcall(C_Map.SetUserWaypoint, UiMapPoint.CreateFromCoordinates(zone, (cu - l) / (r - l), (cv - t) / (b - t)))
 	end
-	if mod.RefreshWaypoint then pcall(mod.RefreshWaypoint) end
+end
+
+-- the waypoint changed (whoever set it or took it off): its icon here
+local function OnWaypoint()
+	if built and mod.RefreshWaypoint then pcall(mod.RefreshWaypoint) end
+end
+
+-- whether a game rule has map pins off: Blizzard's GamepadTryPlaceWaypoint does nothing then
+local function PinsOff()
+	local rule = Enum and Enum.GameRule and Enum.GameRule.WorldMapTrackingPinDisabled
+	return rule ~= nil and C_GameRules ~= nil and C_GameRules.IsGameRuleActive ~= nil and C_GameRules.IsGameRuleActive(rule) and true or false
+end
+
+-- the left stick pressed, after Blizzard's own GamepadTryPlaceWaypoint. That one did one of three things:
+-- nothing (a game rule: whatever waypoint is there is someone else's), took the waypoint off (its cursor was
+-- on it: none there now), or set one where its cursor is on its map: only that one is put again here
+local function PadPressed()
+	if not (built and view:IsShown() and map.GetNormalizedGamepadCursorPosition) then return end
+	local ok, mapID, x, y = pcall(function()
+		if PinsOff() then return end
+		return map:GetMapID(), map:GetNormalizedGamepadCursorPosition()
+	end)
+	if not ok or type(mapID) ~= "number" or type(x) ~= "number" or type(y) ~= "number"
+		or ns.Safe.IsSecret(x) or ns.Safe.IsSecret(y) then return end
+	local ok2, stick = pcall(WaypointAt, mapID, x, y)
+	if ok2 and stick then
+		PutAgain()
+		if mod.RefreshWaypoint then pcall(mod.RefreshWaypoint) end
+	end
 end
 
 local function Setup()
@@ -813,6 +852,10 @@ local function Setup()
 	end
 	if map.NavigateToParentMap then
 		hooksecurefunc(map, "NavigateToParentMap", function() if view:IsShown() then Step(false) end end)
+	end
+	-- the left stick pressed: its waypoint put again where this view's cursor is (PadPressed)
+	if map.GamepadTryPlaceWaypoint then
+		hooksecurefunc(map, "GamepadTryPlaceWaypoint", PadPressed)
 	end
 	-- a setting changed (the menu's checklist, Options): the view's look again
 	hooksecurefunc(mod, "Refresh", function()

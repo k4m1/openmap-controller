@@ -40,6 +40,7 @@ AI coding agents: read [AGENTS.md](../AGENTS.md) too.
    python -P tools/offline-test/player.py   # the player arrow and location ping hidden together
    python -P tools/offline-test/press.py    # a press that wandered off isn't a click
    python tools/offline-test/run.py padview  # ... and with padView: OpenMap's map over Blizzard's (PadView.lua)
+   python -P tools/offline-test/padwaypoint.py  # the controller view's waypoint: the stick's put where its cursor is, another addon's left alone
    python -P tools/offline-test/combat.py   # the map's pins in combat (Combat.lua)
    python -P tools/offline-test/caves.py    # caves surfacing (Close.lua, the cave data), Ironforge's own minimap
    python -P tools/offline-test/explored.py # unexplored land hidden up close (Stitch.lua)

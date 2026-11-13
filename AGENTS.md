@@ -42,6 +42,7 @@ python tools/offline-test/run.py secret
 python tools/offline-test/run.py pad
 python tools/offline-test/run.py padmap
 python tools/offline-test/run.py padview
+python -P tools/offline-test/padwaypoint.py
 python tools/offline-test/navigation.py
 python -P tools/offline-test/combat.py
 python -P tools/offline-test/caves.py
