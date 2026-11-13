@@ -17,6 +17,11 @@
   - **Auto-add group's pins**: pins your party or raid shares are added without asking.
     By diegodiaz1256.
 
+### Fixed
+
+- **City names in your language**: Thunder Bluff's and Darnassus' name banners showed in English on
+  other languages' clients; the zone map's own banner, in the client's language, is shown there now (#47).
+
 ## v0.8.8 (2026-11-13)
 
 ### Fixed

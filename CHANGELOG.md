@@ -17,7 +17,18 @@
   - **Auto-add group's pins**: pins your party or raid shares are added without asking.
     By diegodiaz1256.
 
+### Improved
+
+- **Questie's quest icons in front**: a "!" or "?" is no longer hidden under a flight master or a
+  dungeon's icon; Questie's townsfolk stay under OpenMap's icons (#92).
+
+- **A word about MapUtils**: with MapUtils on, OpenMap says once in chat that the two both change the
+  map's zoom, which made the map and Blizzard's quest areas jump while zooming (#160).
+
 ### Fixed
+
+- **City names in your language**: Thunder Bluff's and Darnassus' name banners showed in English on
+  other languages' clients; the zone map's own banner, in the client's language, is shown there now (#47).
 
 - **Your quests' icons show in the controller view** (Options' "OpenMap's map with the Gamepad UI"):
   there were none, and no tooltips. Every quest in your log is now OpenMap's icon there, at any zoom,
