@@ -8,6 +8,10 @@
   guild and transport markers in dungeons, raids and battlegrounds. Group members and other
   addons' maps and markers remain visible; marker preferences are kept on leaving.
 
+- With Dungeon maps off, that filter also suspends the world canvas behind an instance
+  overlay, including world-zone hover labels, coordinates, zone-selection clicks and
+  world-position group dots. Real dungeon-map group blips remain visible.
+
 ## v0.8.7 (2026-11-12)
 
 Nothing new for retail: v0.8.7 fixes Questie's icons on WoW Forever.

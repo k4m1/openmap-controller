@@ -492,7 +492,7 @@ local BLIP_GONE = 0.01            -- (a size too small to draw: 0 is taken as th
 local BLIP_UNITS = { player = "playerArrow", party = "group", raid = "group" }
 local blipHidden = setmetatable({}, { __mode = "k" })    -- pin -> { unit = true } sized away
 local blipHooked = setmetatable({}, { __mode = "k" })
-local function BlipOff(unit) return mod.db[BLIP_UNITS[unit]] == false end
+local function BlipOff(unit) return mod.instanceWorldHidden or mod.db[BLIP_UNITS[unit]] == false end
 local function Locked(pin) return pin:IsProtected() and InCombatLockdown() end
 local function Blips(pin)
 	local ping = type(pin.StartPlayerPing) == "function" and type(pin.StopPlayerPing) == "function"
@@ -553,7 +553,10 @@ ticker:SetScript("OnUpdate", function(_, elapsed)
 	elapsedSum = elapsedSum + elapsed
 	if elapsedSum < 0.1 then return end
 	elapsedSum = 0
-	if not active then return end
+	if not active then
+		if mod.instanceWorldHidden then RaisePlayer() end
+		return
+	end
 	-- another addon's zoom steps past ours (BetterMaps', High Fidelity World Map's): the deepest
 	-- zoom is OpenMap's, and Blizzard's icons size themselves from the last step
 	local zl = sc.zoomLevels
@@ -740,9 +743,11 @@ function mod:UpdateBrightness()
 	shade:SetShown(active and self.enabled and brightness < 1)
 end
 
-local function Attach(mapID)
-	mod:RefreshInstancePins()
-	active = mod.enabled and Stitchable(mapID) and S.IsBuilt() and S.Layout(mapID) or false
+local function Attach(mapID, refreshed)
+	if not refreshed then mod:RefreshInstancePins(true) end
+	local wasHidden = mod.instanceWorldHidden
+	mod.instanceWorldHidden = mod.InstanceWorldHidden(mapID)
+	active = mod.enabled and not mod.instanceWorldHidden and Stitchable(mapID) and S.IsBuilt() and S.Layout(mapID) or false
 	S.SetShown(active)
 	mod:UpdateBrightness()
 	BlizzardArt()
@@ -758,6 +763,10 @@ local function Attach(mapID)
 		anim = nil
 		if mod.IsPainting and mod:IsPainting() then mod:TogglePaint(false) end
 		if mod.IsSketching and mod:IsSketching() then mod:ToggleSketch(false) end
+	end
+	if map:IsShown() and (wasHidden or mod.instanceWorldHidden) then
+		RaisePlayer()
+		if mod.instanceWorldHidden then ticker:Show() end
 	end
 	if mod.OnStitchedChanged then mod.OnStitchedChanged(active) end
 end
@@ -930,6 +939,7 @@ local function HookHighlight()
 		if not pin.omRefresh and pin.Refresh and pin.HighlightTexture then
 			pin.omRefresh = pin.Refresh
 			pin.Refresh = function(self)
+				if mod.instanceWorldHidden then return self.HighlightTexture:Hide() end
 				if active and not mod.db.hoverHighlight then return self.HighlightTexture:Hide() end
 				if active and map:GetMapID() == WORLD and select(3, View()) >= ZONE_HIGHLIGHT then
 					return HighlightZone(self)
@@ -1001,6 +1011,8 @@ end
 local function WasDrag() return press.moved end
 
 local function OnCanvasClick(from, button)
+	-- NeedRoll draws over a world-map host: a click must not select a zone underneath it.
+	if mod.instanceWorldHidden then return true end
 	if not active then return false end
 	if Dropping(button) then
 		DropAtCursor()
@@ -1228,6 +1240,8 @@ local function Setup()
 	end
 	local shown = Ours("map shown", function()
 		if not S.IsBuilt() and map:GetMapID() then sc:OnCanvasSizeChanged() end   -- built on first showing
+		mod:RefreshInstancePins()
+		if mod.instanceWorldHidden then ticker:Show() RaisePlayer() end
 		if active then
 			ticker:Show()
 			S.Recull()
@@ -1457,12 +1471,23 @@ local function ApplyChart()
 	end
 end
 
-function mod:RefreshInstancePins()
+function mod.InstanceWorldHidden(mapID)
+	-- A real dungeon map keeps its native player/group positions. Only suspend a world host.
+	return mod.instancePinsHidden and mod.db.dungeonMaps == false
+		and Stitchable(mapID or (map and map:GetMapID())) or false
+end
+
+function mod:RefreshInstancePins(onlyPins)
 	-- Use the player's instance, not the displayed map: NeedRoll can keep a world map as host.
 	local inside, kind = IsInInstance()
 	inside, kind = ns.Safe.Value(inside), ns.Safe.Value(kind)
-	S.SetWorldPinsHidden(self.db.hideWorldPinsInInstances and inside
-		and (kind == "party" or kind == "raid" or kind == "pvp" or kind == "arena"))
+	self.instancePinsHidden = self.db.hideWorldPinsInInstances and inside
+		and (kind == "party" or kind == "raid" or kind == "pvp" or kind == "arena") or false
+	S.SetWorldPinsHidden(self.instancePinsHidden)
+	if not onlyPins and map and sc and S.IsBuilt()
+		and self.instanceWorldHidden ~= self.InstanceWorldHidden(map:GetMapID()) then
+		Attach(map:GetMapID(), true)
+	end
 end
 
 function mod:Refresh()

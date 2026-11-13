@@ -6,6 +6,7 @@ local _, ns = ...
 ns.MapChangelog = {
 	{ version = "Unreleased", date = "", heads = { [1] = "New", }, items = {
 		"|cff6e2c0aHide world markers in instances|r: an optional temporary filter hides OpenMap's friends, guild and transport markers in dungeons, raids and battlegrounds. Group members and other addons' maps and markers remain visible; marker preferences are kept on leaving.",
+		"With Dungeon maps off, that filter also suspends the world canvas behind an instance overlay, including world-zone hover labels, coordinates, zone-selection clicks and world-position group dots. Real dungeon-map group blips remain visible.",
 	} },
 	{ version = "v0.8.6", date = "2026-11-12", heads = { [1] = "Improved", }, items = {
 		"|cff6e2c0aIcons stay shown while zooming|r: \"Fade icons while zooming\" is now off for everyone, as zooming is smooth enough with them shown; turn it on again in the menu's On the map tab if you prefer it.",
