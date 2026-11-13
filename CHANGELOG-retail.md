@@ -17,6 +17,12 @@
   - **Auto-add group's pins**: pins your party or raid shares are added without asking.
     By diegodiaz1256.
 
+### Improved
+
+- **The controller view's switch in the map's menu too**: "OpenMap's map with the Gamepad UI (test)"
+  is under The map in OpenMap's menu as well as in Options (it was only in Esc > Options > AddOns,
+  and a player took it for gone).
+
 ### Fixed
 
 - **Quests from the tracker open on their details**: the first click on a tracked quest opened the

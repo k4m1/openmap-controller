@@ -4,12 +4,13 @@
 local _, ns = ...
 
 ns.MapChangelog = {
-	{ version = "Unreleased", date = "", heads = { [1] = "New", [4] = "Improved", [8] = "Fixed", }, items = {
+	{ version = "Unreleased", date = "", heads = { [1] = "New", [4] = "Improved", [9] = "Fixed", }, items = {
 		"|cff6e2c0aHide world markers in instances|r (the menu's On the map tab, and Options; off unless turned on): in dungeons, raids and battlegrounds, OpenMap's friends, guild, transport and all-zone quest markers step aside. With Dungeon maps off and another addon's dungeon map shown over the world (NeedRoll's), the world under it stops answering the mouse, and a right-click brings the world map back, at the dungeon's outdoor entrance (#232). By HonzoNebro.",
 		"|cff6e2c0aPin options|r (OpenMap's options, Moving about and Sharing): - |cff6e2c0aFollow new pins|r: on by default, as before. Off, a pin you drop doesn't become the waypoint, so addons that route to it (Shortest Path Forever) are left alone; the pin's Follow still sets it. - |cff6e2c0aSend new pins to group|r: a pin you drop goes to your party or raid once its card is closed. - |cff6e2c0aAuto-add group's pins|r: pins your party or raid shares are added without asking. By diegodiaz1256.",
 		"|cff6e2c0aA map of Blackmaw Hold|r, drawn by Santiago Reyes: all six of its floors, from Blackmaw Grove and the Festering Grotto down to the Depths of Forbidden Magic (the floor list at the top of the dungeon's map, or its arrows). (New textures: restart the game.)",
-		"|cff6e2c0aCity of Dalaran's map is Santiago Reyes's updated version, with the Underbelly|r, where the dungeon starts, as a second floor (#220).",
+		"|cff6e2c0aCity of Dalaran's map is Santiago Reyes's updated version, with the Underbelly|r, where the dungeon starts, as a second floor (#220). Opened inside the dungeon, the map shows the floor you're on.",
 		"|cff6e2c0aShaper's Terrace's map is Santiago Reyes's final version, with the Prismatic Talus|r as a second floor.",
+		"|cff6e2c0aThe controller view's switch in the map's menu too|r: \"OpenMap's map with the Gamepad UI (test)\" is under The map in OpenMap's menu as well as in Options (it was only in Esc > Options > AddOns, and a player took it for gone).",
 		"|cff6e2c0aQuestie's quest icons in front|r: a \"!\" or \"?\" is no longer hidden under a flight master or a dungeon's icon; Questie's townsfolk stay under OpenMap's icons (#92).",
 		"|cff6e2c0aA word about MapUtils|r: with MapUtils on, OpenMap says once in chat that the two both change the map's zoom, which made the map and Blizzard's quest areas jump while zooming (#160).",
 		"|cff6e2c0aQuests from the tracker open on their details|r: the first click on a tracked quest opened the map on the quest list; it shows the quest's text now (#224).",

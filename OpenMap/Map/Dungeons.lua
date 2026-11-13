@@ -1074,6 +1074,15 @@ local function OpenView(inst, pin)
 	for i, f in ipairs(floors) do
 		if f.wing == inst[2] or (f.name and f.name == WING_FLOORS[inst[2]]) then first = i break end
 	end
+	-- inside it: the floor of the sub-zone you're in, where a drawn floor names one (Dalaran's Underbelly)
+	if IsInInstance and IsInInstance() and inst[1] ~= 0 and select(8, GetInstanceInfo()) == inst[1] then
+		local sub = Safe.Call(GetSubZoneText)
+		for i, f in ipairs(floors) do
+			for _, s in ipairs(f.subzones or {}) do
+				if sub and s == sub then first = i break end
+			end
+		end
+	end
 	-- back to: the zone the entrance is in
 	EndMarkup(false)
 	view.heldMarks = nil

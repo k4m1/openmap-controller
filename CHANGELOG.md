@@ -24,10 +24,15 @@
 ### Improved
 
 - **City of Dalaran's map is Santiago Reyes's updated version, with the Underbelly**, where the
-  dungeon starts, as a second floor (#220).
+  dungeon starts, as a second floor (#220). Opened inside the dungeon, the map shows the floor
+  you're on.
 
 - **Shaper's Terrace's map is Santiago Reyes's final version, with the Prismatic Talus** as a
   second floor.
+
+- **The controller view's switch in the map's menu too**: "OpenMap's map with the Gamepad UI (test)"
+  is under The map in OpenMap's menu as well as in Options (it was only in Esc > Options > AddOns,
+  and a player took it for gone).
 
 - **Questie's quest icons in front**: a "!" or "?" is no longer hidden under a flight master or a
   dungeon's icon; Questie's townsfolk stay under OpenMap's icons (#92).

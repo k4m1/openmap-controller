@@ -323,6 +323,8 @@ local function Rows()
 	end
 	fromOptions(L["Full-screen map fills the width"], "fullWidth", Icon("INV_Misc_Map_01"))
 	fromOptions(L["Chat over the full-screen map"], "chatOverMap", Icon("INV_Letter_15"))
+	-- (here too, not only in Options: a player thought it gone)
+	fromOptions(L["OpenMap's map with the Gamepad UI (test)"], "padView", Icon("INV_Misc_Map_01"))
 	rows[#rows + 1] = { L["Up close"] }
 	rows[#rows + 1] = optRow(L["Minimap detail"], "minimap", Icon("Spell_Nature_FarSight"))
 	rows[#rows + 1] = optRow(L["Minimap detail in major cities"], "cityMinimap", Icon("Spell_Arcane_TeleportStormWind"))
