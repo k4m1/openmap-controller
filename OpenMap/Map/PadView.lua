@@ -219,7 +219,9 @@ local function Step(inward)
 		mod.CloseMenu()
 		return
 	end
-	if inward and hovered and hovered:IsVisible() then return Press(hovered) end
+	-- (the icon under the cursor pressed. One marked as having nothing to press (openmapNoPress, and no
+	-- OnClick given it) lets A through: the zone under it is zoomed into, as beside it)
+	if inward and hovered and hovered:IsVisible() and not (hovered.openmapNoPress and not hovered.OnClick) then return Press(hovered) end
 	local cu, cv
 	if lastX then cu, cv = WorldAt(Offset(lastX, lastY)) else cu, cv = u, v end
 	local chain = S.ChainAt(cu, cv)
@@ -751,6 +753,15 @@ end
 function mod.PadViewBuilt() return built end
 -- for Dungeons.lua: this view is the map now (Blizzard's left as it is)
 function mod.PadViewOn() return built and On() end
+-- for the files whose pins are handed out again as they're redrawn (Stitch.lua's sets reuse their frames):
+-- the pin under the controller's cursor, if it's one of `pins`, is left first, as the mouse would leave it,
+-- and entered again if it's back, its tooltip as it is then
+function mod.PadViewForget(pins)
+	if not hovered or type(pins) ~= "table" then return end
+	for _, pin in ipairs(pins) do
+		if pin == hovered then Enter(nil) return end
+	end
+end
 
 -- /openmap padview: how the controller view is getting on
 function mod.PadViewDiag()
@@ -835,6 +846,12 @@ local function Setup()
 	end
 	diag.setup = "done"
 	if mod.PadDungeonHost then mod.PadDungeonHost(map) end
+	-- friends and guild on the map (Friends.lua: who's where heard and asked for from now on, drawn on this
+	-- view while it's up; your own place sent only if Share where you are is on, which isn't asked here)
+	if mod.SetupFriends then
+		local okF, errF = pcall(mod.SetupFriends, mod, map)
+		if not okF then diag.panel = "friends: " .. tostring(errF) end   -- (/openmap padview says so)
+	end
 
 	view = CreateFrame("Frame", nil, map)
 	view:SetAllPoints(sc)

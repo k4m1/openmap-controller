@@ -46,6 +46,7 @@ AI coding agents: read [AGENTS.md](../AGENTS.md) too.
    python -P tools/offline-test/explored.py # unexplored land hidden up close (Stitch.lua)
    python -P tools/offline-test/chart.py    # the sea chart's layout: Chart.lua as tools/map-chart/layout.py
    python -P tools/offline-test/friends.py  # friends and guild on the map: what Friends.lua hears and sends
+   python -P tools/offline-test/padfriends.py  # the controller view: friends and guild set up with it, A on an icon with nothing to press
    python -P tools/offline-test/bosses.py   # boss pins' data: each on one of its dungeon's floors, on the picture
    python -P tools/offline-test/questie.py  # Questie's icons found as a LibStub library (to 12.7) and a module (12.8)
    ```

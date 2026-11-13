@@ -37,6 +37,7 @@ jobs:
       - run: python -P tools/offline-test/press.py
       - run: python -P tools/offline-test/brightness.py
       - run: python -P tools/offline-test/friends.py
+      - run: python -P tools/offline-test/padfriends.py
       - run: python -P tools/offline-test/bosses.py
       - run: python -P tools/offline-test/questie.py
       # (WoW Forever's own data: its combat list, caves, painted gaps and sea chart)

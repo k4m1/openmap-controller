@@ -3,6 +3,7 @@
 What's heard (from whom, on which channel) and what's sent (when, to whom), against a stubbed client:
 the guild roster, a friends list, the map's pins, the addon-message channel.
 """
+import os
 from pathlib import Path
 import unittest
 
@@ -10,6 +11,7 @@ from lupa.lua51 import LuaRuntime
 
 
 ROOT = Path(__file__).resolve().parents[2] / "OpenMap"
+FRIENDS = Path(os.environ.get("OPENMAP_FRIENDS") or ROOT / "Map" / "Friends.lua")   # (another Friends.lua to run these against)
 
 STUB = r"""
 NOW, sent, events, frames, pins, badges = 1000, {}, {}, {}, {}, {}
@@ -94,11 +96,14 @@ issecretvalue = function(v) return v == secretText and v ~= nil end
 S = { WORLD = 947 }
 function S.Rect(id) if id == 1429 or id == 1436 or id == 1431 then return 0.1, 0.2, 0.1, 0.2 end end
 function S.IsBuilt() return true end
-function S.PinSet(key) return { key = key } end
-function S.ClearPinSet(set) if set.key == "friends" then wipe(pins) else wipe(badges) end end
+function S.PinSet(key) return { key = key, pins = {} } end
+function S.ClearPinSet(set) wipe(set.pins) if set.key == "friends" then wipe(pins) else wipe(badges) end end
+made = {}                           -- every pin handed out, dots and badges
 function S.AddPin(set, u, v, look, data)
 	local pin = Frame()
 	pin.data = data
+	made[#made + 1] = pin
+	set.pins[#set.pins + 1] = pin
 	if set.key == "friends" then pins[#pins + 1] = data else badges[#badges + 1] = data end
 	return pin
 end
@@ -130,7 +135,7 @@ class FriendsTests(unittest.TestCase):
     def setUp(self):
         self.lua = LuaRuntime(unpack_returned_tuples=True)
         self.lua.execute(STUB)
-        src = (ROOT / "Map" / "Friends.lua").read_text(encoding="utf-8")
+        src = FRIENDS.read_text(encoding="utf-8")
         self.lua.execute("local f = assert(loadstring(...)) f('OpenMap', ns)", src)
         self.lua.execute("""
             for k, v in pairs(mod.defaults) do mod.db[k] = v end
@@ -394,6 +399,97 @@ class FriendsTests(unittest.TestCase):
         self.lua.execute("worldMap.scripts.OnShow()")
         self.run_(1)
         self.assertFalse(self.lua.eval("askFrame.shown"))   # (asked once)
+
+    # --- with the game's Gamepad UI: OpenMap's controller view (PadView.lua), its usual map not set up
+
+    def heard_and_opened(self):
+        self.run_(8)
+        self.lua.execute("""
+            Fire('CHAT_MSG_ADDON', 'OpenMapLoc', 'L1\\t1429\\t0.3\\t0.4\\tMAGE\\t30', 'GUILD', 'Guildie-Forever')
+            worldMap:Show()
+        """)
+        self.run_(2)
+        return self.lua.eval("#pins"), self.lua.eval("#badges")
+
+    def test_on_the_controller_view_as_on_the_usual_map(self):
+        self.lua.execute("mod.IsStitched = function() return false end mod.PadViewOn = function() return true end")
+        self.assertEqual(self.heard_and_opened(), (1, 1))   # (the guildie's dot, the friend's zone badge)
+
+    def test_on_neither_of_openmap_s_maps_nothing_is_drawn(self):
+        # (Blizzard's own map on screen: the usual map not stitched, the controller view not up or not built yet)
+        for pad in ("mod.PadViewOn = nil", "mod.PadViewOn = function() return false end"):
+            with self.subTest(pad=pad):
+                self.setUp()
+                self.lua.execute("mod.IsStitched = function() return false end " + pad)
+                self.assertEqual(self.heard_and_opened(), (0, 0))
+
+    def test_the_map_changing_hands_is_drawn_at_once(self):
+        # (not only at the next ten seconds' redraw)
+        self.lua.execute("mod.IsStitched = function() return false end mod.PadViewOn = function() return false end")
+        self.assertEqual(self.heard_and_opened(), (0, 0))
+        self.lua.execute("mod.PadViewOn = function() return true end")
+        self.run_(2)
+        self.assertEqual((self.lua.eval("#pins"), self.lua.eval("#badges")), (1, 1))
+
+    def test_the_controller_s_a_goes_through_a_dot_and_a_badge(self):
+        # (PadView.lua: neither has anything to press, and a badge sits in the middle of its zone)
+        self.assertEqual(self.heard_and_opened(), (1, 1))
+        # (every dot and badge handed out, at each redraw: the mark its own, and no click given it)
+        self.assertGreaterEqual(self.lua.eval("#made"), 2)
+        marked = self.lua.eval("""(function()
+            local n = 0
+            for _, pin in ipairs(made) do
+                if rawget(pin, "openmapNoPress") == true and rawget(pin, "OnClick") == nil then n = n + 1 end
+            end
+            return n
+        end)()""")
+        self.assertEqual(marked, self.lua.eval("#made"))
+
+    def test_not_asked_whether_to_share_on_the_controller_view_and_nothing_sent(self):
+        self.lua.execute("""
+            mod.enabled, mod.db.presetAsked = false, true
+            mod.IsStitched = function() return false end
+            mod.PadViewOn = function() return true end
+            worldMap.scripts.OnShow()
+        """)
+        self.run_(1)
+        self.assertFalse(self.lua.eval("askFrame and askFrame.shown"))
+        self.assertFalse(self.lua.eval("mod.db.friendsShare or mod.db.shareAsked"))
+        # (sharing off: nothing of yours goes out, whatever is opened, changed or refreshed, however long)
+        self.lua.execute("here = { 1429, 0.6, 0.5 } mod.RefreshFriends()")
+        self.run_(90)
+        self.lua.execute("here = { 1436, 0.2, 0.2 } worldMap.scripts.OnShow() mod.RefreshFriends()")
+        self.run_(90)
+        self.assertEqual(self.lua.eval("Sent('GUILD', 'L1')"), 0)
+        self.assertEqual(self.lua.eval("Sent('GUILD', 'L0')"), 0)
+        self.assertEqual(self.lua.eval("Sent('WHISPER', 'L1')"), 0)
+
+    def test_sharing_turned_on_in_the_menu_sends_on_the_controller_view_too(self):
+        self.lua.execute("""
+            mod.enabled = false
+            mod.IsStitched = function() return false end
+            mod.PadViewOn = function() return true end
+            mod.db.friendsShare = true
+            mod.RefreshFriends()
+        """)
+        self.run_(1)
+        self.assertEqual(self.lua.eval("Sent('GUILD', 'L1')"), 1)
+
+    def test_the_cursor_on_a_dot_or_a_badge_is_told_before_they_re_handed_out_again(self):
+        # (PadView.lua's: the pin under the controller's cursor left, then entered again, its tooltip made anew)
+        self.assertEqual(self.heard_and_opened(), (1, 1))
+        self.lua.execute("forgot = {} function mod.PadViewForget(list) forgot[#forgot + 1] = #list end")
+        self.run_(11)                                       # (the ten seconds' redraw)
+        self.assertEqual(list(self.lua.eval("forgot").values())[:2], [1, 1])   # (each set's pins, still there)
+
+    def test_set_up_once_whoever_asks(self):
+        # (the usual map's setup and the controller view's: one tick, one hearing, not two)
+        self.lua.execute("other = CreateFrame() mod:SetupFriends(other) mod:SetupFriends(worldMap)")
+        tickers = self.lua.eval("(function() local n = 0 for _, t in ipairs(timers) do if t.every then n = n + 1 end end return n end)()")
+        self.assertEqual(tickers, 1)
+        self.lua.execute("mod.db.friendsShare = true mod.RefreshFriends()")
+        self.run_(1)
+        self.assertEqual(self.lua.eval("Sent('GUILD', 'L1')"), 1)
 
     def test_turned_off_nothing_on_the_map(self):
         self.run_(8)

@@ -652,6 +652,7 @@ local function RefreshGroup(afterMapChange)
 			if u then
 				local id = Safe.Call(UnitGUID, unit) or unit
 				groupPins[id] = UpdateGroupPin(groupPins[id], unit, u, v, zone)
+				groupPins[id].openmapNoPress = true   -- (PadView.lua: nothing to press, the controller's A zooms in under it)
 				seen[id] = true
 			end
 		end
