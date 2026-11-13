@@ -104,6 +104,29 @@ Every zone map is drawn onto one canvas in Azeroth's (947) art pixels, placed by
   screen and a zoom only moves them. A set with `build` makes its pins the first
   time it shows.
 
+The optional `hideWorldPinsInInstances` setting adds a temporary filter in `Stitch.lua`'s
+`ShowSets`: friends and guild dots/zone badges, boat and zeppelin icons/routes, flight
+masters/selected flight routes and OpenMap's all-zone quest pins are hidden in player
+instances (`party`, `raid`, `pvp`, `arena`). `WorldMap.lua` refreshes it at enable, instance
+events, map attachment and option changes. It leaves `set.on`, saved marker preferences,
+group pins and other addons' frames alone. Sets created while filtered start hidden too;
+later refreshes and view changes go through the same filter.
+
+With Dungeon maps off and a stitched world map hosting the instance overlay, the filter
+also detaches OpenMap's world canvas and pins (`instanceWorldHidden`). World navigation,
+hover labels and coordinate readouts stop. Native world-map player/party/raid blips are
+temporarily sized away through the existing combat-aware blip path, retried by the ticker.
+Actual dungeon-map blips and other addons' player pins are not affected. Changes to the
+instance, host map or settings attach/detach the world again without changing its map ID.
+
+A right-click over the map explicitly enters `instanceWorldBrowsing` for that opening.
+The deferred global mouse-up handler lets NeedRoll dismiss its overlay first, then restores
+world layers, marker preferences and zoom levels. Dungeons.lua locates the current instance's
+recorded entrance and uses its containing city/zone's fit zoom; Nav.lua remembers the last
+outdoor player point as a fallback, independently of the user's panned/reopen view. Further
+clicks use normal world navigation. Closing/reopening clears this temporary browsing state;
+a generation check discards callbacks from a previous opening. No map ID is forced.
+
 **Baked zones** (`Data/ZoneArt.lua`, `MapZones/`, from `render.py --bake-zones`): the zone
 layers above (base art, overlays, their colour-match copies, the interiors, the gaps' finer
 maps) composited offline onto the world in 512-px tiles at 16 px per world unit. At the

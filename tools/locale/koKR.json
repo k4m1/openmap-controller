@@ -540,5 +540,7 @@
  "A pin you drop goes to your party or raid once its card is closed (those with OpenMap are asked whether to add it).": "꽂은 핀은 카드를 닫을 때 파티 또는 공격대에 공유됩니다 (OpenMap 사용자에게는 추가할지 묻습니다).",
  "Auto-add group's pins": "파티 핀 바로 추가",
  "Map pins your party or raid shares with you are added at once, without asking.": "파티 또는 공격대가 공유한 지도 핀을 묻지 않고 바로 추가합니다.",
- "MapUtils also changes the world map's zoom and scale: with it and OpenMap both on, the map and Blizzard's quest areas can jump while zooming. Turn one of them off if you see that.": "MapUtils도 세계 지도의 확대와 배율을 바꿉니다. MapUtils와 OpenMap을 함께 켜면 확대할 때 지도와 블리자드 퀘스트 지역이 튈 수 있습니다. 그렇다면 둘 중 하나를 끄세요."
+ "MapUtils also changes the world map's zoom and scale: with it and OpenMap both on, the map and Blizzard's quest areas can jump while zooming. Turn one of them off if you see that.": "MapUtils도 세계 지도의 확대와 배율을 바꿉니다. MapUtils와 OpenMap을 함께 켜면 확대할 때 지도와 블리자드 퀘스트 지역이 튈 수 있습니다. 그렇다면 둘 중 하나를 끄세요.",
+ "Hide world markers in instances": "인스턴스에서 세계 지도 표시 숨기기",
+ "In dungeons, raids and battlegrounds, temporarily hide OpenMap's friends, guild, transport and world quest markers. Party and raid members and other addons' maps and markers stay visible. Your marker settings are kept.": "던전, 공격대 및 전장에서 OpenMap의 친구, 길드, 교통 및 세계 지도 퀘스트 표시를 일시적으로 숨깁니다. 파티원과 공격대원, 다른 애드온의 지도와 표시는 계속 표시됩니다. 표시 설정은 유지됩니다."
 }

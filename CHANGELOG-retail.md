@@ -4,6 +4,12 @@
 
 ### New
 
+- **Hide world markers in instances** (the menu's On the map tab, and Options; off unless turned on):
+  in dungeons, raids and battlegrounds, OpenMap's friends, guild, transport and all-zone quest markers
+  step aside. With Dungeon maps off and another addon's dungeon map shown over the world (NeedRoll's),
+  the world under it stops answering the mouse, and a right-click brings the world map back, at the
+  dungeon's outdoor entrance (#232). By HonzoNebro.
+
 - **Pin options** (OpenMap's options, Moving about and Sharing):
   - **Follow new pins**: on by default, as before. Off, a pin you drop doesn't become the waypoint,
     so addons that route to it (Shortest Path Forever) are left alone; the pin's Follow still sets it.
