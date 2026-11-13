@@ -1,5 +1,13 @@
 # OpenMap changelog
 
+## Unreleased
+
+### Fixed
+
+- **Friends on the map: your own faction only.** Your place is only shared with, and shown from,
+  players of your own faction: Battle.net friends on the other faction no longer see where you are, nor
+  you them (a player's report: it let Horde and Alliance find each other for PvP).
+
 ## v0.8.7 (2026-11-12)
 
 ### Fixed

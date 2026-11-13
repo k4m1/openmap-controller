@@ -62,6 +62,7 @@ GetNormalizedRealmName = function() return "Forever" end
 UnitName = function() return "Me" end
 UnitGUID = function() return "Player-1-0001" end
 UnitClass = function() return "Warrior", "WARRIOR" end
+UnitFactionGroup = function() return myFaction or "Alliance" end
 UnitLevel = function() return 25 end
 IsInGroup = function() return false end
 IsInInstance = function() return inInstance, inInstance and "party" or "none" end
@@ -187,6 +188,36 @@ class FriendsTests(unittest.TestCase):
         self.run_(12)
         self.assertEqual(self.lua.eval("#pins"), 0)
 
+    def test_battle_net_friends_of_the_other_faction_are_never_on_the_map(self):
+        # Horde and Alliance never see where the other is: Battle.net reaches across factions
+        self.lua.execute("""
+            local accounts = {
+                { characterName = "Ally", realmName = "Forever", playerGuid = "Player-1-0010", isOnline = true, clientProgram = "WoW",
+                  characterLevel = 30, areaName = "Elwynn Forest", className = "Mage", gameAccountID = 21, factionName = "Alliance" },
+                { characterName = "Hordie", realmName = "Forever", playerGuid = "Player-1-0011", isOnline = true, clientProgram = "WoW",
+                  characterLevel = 30, areaName = "Durotar", className = "Mage", gameAccountID = 22, factionName = "Horde" },
+                { characterName = "Unknown", realmName = "Forever", playerGuid = "Player-1-0012", isOnline = true, clientProgram = "WoW",
+                  characterLevel = 30, areaName = "Durotar", className = "Mage", gameAccountID = 23 },
+            }
+            BNGetNumFriends = function() return #accounts end
+            C_BattleNet = { GetFriendAccountInfo = function(i) return { gameAccountInfo = accounts[i] } end,
+                GetGameAccountInfoByID = function(id) for _, a in ipairs(accounts) do if a.gameAccountID == id then return a end end end }
+            bnSent = {}
+            BNSendGameData = function(id, prefix, text) bnSent[#bnSent + 1] = id .. ":" .. text end
+            mod.db.friendsShare = true mod.RefreshFriends()
+        """)
+        self.run_(8)
+        for id_ in (21, 22, 23):
+            self.lua.execute("Fire('BN_CHAT_MSG_ADDON', 'OpenMapLoc', 'L1\\t1429\\t0.3\\t0.4\\tMAGE\\t30', 'WHISPER', %d)" % id_)
+        self.lua.execute("here = { 1429, 0.5, 0.5 }")
+        self.run_(12)
+        dots = self.lua.eval("(function() local t = {} for _, d in ipairs(pins) do t[#t + 1] = d.full end table.sort(t) return table.concat(t, ',') end)()")
+        self.assertEqual(dots, "Ally-Forever")
+        sent_to = self.lua.eval("(function() local t = {} for _, m in ipairs(bnSent) do t[m:match('^(%d+):')] = true end local o = {} for k in pairs(t) do o[#o + 1] = k end table.sort(o) return table.concat(o, ',') end)()")
+        self.assertIn("21", sent_to)                    # (your own faction: sent to)
+        self.assertNotIn("22", sent_to)
+        self.assertNotIn("23", sent_to)
+
     def test_heard_places_and_badges(self):
         self.run_(8)
         self.lua.execute("""
@@ -286,7 +317,7 @@ class FriendsTests(unittest.TestCase):
             C_BattleNet = { GetGameAccountInfoByID = function()
                 return {
                     characterName = 'Mara Stonefist', realmName = 'CAMWOWUS1Realm4PvP',
-                    playerGuid = 'Player-2-0003', isInCurrentRegion = false,
+                    playerGuid = 'Player-2-0003', isInCurrentRegion = false, factionName = 'Alliance',
                 }
             end }
             Fire('GUILD_ROSTER_UPDATE')
@@ -393,7 +424,7 @@ class FriendsTests(unittest.TestCase):
                 connected = true, level = 30, area = "Elwynn Forest", className = "Mage" } }
             local account = { characterName = "Guildie Oak", realmName = "CAMWOWEU5Realm12PvP", playerGuid = memberGuid,
                 isOnline = true, clientProgram = "WoW", characterLevel = 30, areaName = "Elwynn Forest",
-                className = "Mage", gameAccountID = 17 }
+                className = "Mage", gameAccountID = 17, factionName = "Alliance" }
             BNGetNumFriends = function() return 1 end
             C_BattleNet = { GetFriendAccountInfo = function() return { gameAccountInfo = account } end,
                 GetGameAccountInfoByID = function(id) if id == 17 then return account end end }
