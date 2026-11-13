@@ -80,11 +80,12 @@ end
 -- a realm as compared: no spaces, hyphens or apostrophes, any case
 local function Plain(rlm) return (rlm:gsub("[%s%-']", "")):lower() end
 
--- Forever's numbered realms share a ruleset map. Compare the pool, not its shard number:
--- CAMWOWEU5Realm4PvP and CAMWOWEU5Realm12PvP both become camwoweu5realmpvp.
+-- Forever's numbered realms share a ruleset map. Compare the pool, not its group's or shard's number:
+-- CAMWOWEU5Realm4PvP, CAMWOWEU4Realm12PvP both become camwoweurealmpvp (US1 and US2 are one pool too:
+-- #164, #167); the region (EU, US) and the ruleset (PvP ...) still tell pools apart.
 local function RealmPool(rlm)
 	local key = Plain(rlm)
-	if ns.Client == "Forever" then key = key:gsub("realm%d+", "realm") end
+	if ns.Client == "Forever" then key = key:gsub("%d+realm", "realm"):gsub("realm%d+", "realm") end
 	return key
 end
 
@@ -338,14 +339,23 @@ local function ScanFriends()
 	end
 end
 
--- Battle.net friends playing this same game (another game's zones aren't this map's)
+-- your faction, and whether a Battle.net friend's game is the same (Horde and Alliance never see where the
+-- other is: Battle.net reaches across factions, which the game itself keeps apart, a player's report).
+-- Unknown is never the same. (A guild is one faction; a whisper doesn't reach the other one)
+local function SameFaction(g)
+	local mine = Safe.Call(UnitFactionGroup, "player")
+	local theirs = type(g) == "table" and Safe.Value(g.factionName)
+	return type(mine) == "string" and mine ~= "" and theirs == mine
+end
+
+-- Battle.net friends playing this same game (another game's zones aren't this map's), of your faction
 local function ScanBattleNet()
 	if not (BNGetNumFriends and C_BattleNet and C_BattleNet.GetFriendAccountInfo) then return end
 	for i = 1, tonumber(Safe.Value(BNGetNumFriends())) or 0 do
 		local a = C_BattleNet.GetFriendAccountInfo(i)
 		local g = type(a) == "table" and a.gameAccountInfo
 		if type(g) == "table" and Safe.Value(g.isOnline) and g.clientProgram == (BNET_CLIENT_WOW or "WoW")
-			and (not WOW_PROJECT_ID or g.wowProjectID == WOW_PROJECT_ID) then
+			and (not WOW_PROJECT_ID or g.wowProjectID == WOW_PROJECT_ID) and SameFaction(g) then
 			local full = Full(g.characterName, g.realmName)
 			if full then Friend(full, g.characterLevel, g.areaName, g.className, { bn = g.gameAccountID }, g.playerGuid) end
 		end
@@ -454,6 +464,7 @@ local function OnBattleNetMessage(_, _, prefix, text, _, id)
 	local g = C_BattleNet and C_BattleNet.GetGameAccountInfoByID and C_BattleNet.GetGameAccountInfoByID(id)
 	local full = type(g) == "table" and Full(g.characterName, g.realmName)
 	if not full or IsMe(full) then return end
+	if not SameFaction(g) then return end            -- (the other faction's place: never shown)
 	local guid = CharacterGUID(g.playerGuid)
 	if guid and guid == Safe.Call(UnitGUID, "player") then return end
 	friends[full] = friends[full] or { bn = id }     -- (a Battle.net friend, whatever the last scan saw)

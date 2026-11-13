@@ -1,5 +1,18 @@
 # OpenMap changelog
 
+## v0.8.8 (2026-11-13)
+
+### Fixed
+
+- **Party and raid markers stay steady**: one marker per member, moving smoothly. OpenMap's ring now
+  follows Blizzard's own dot where the game places a member, instead of a second dot of its own that
+  lagged behind it; elsewhere OpenMap's dot keeps its highlight and tooltip as it moves. The ring is
+  now a thin gold edge (the wide one round a dark gap read as a target: #158, #170). By puschie286.
+
+- **Friends on the map: your own faction only.** Your place is only shared with, and shown from,
+  players of your own faction: Battle.net friends on the other faction no longer see where you are, nor
+  you them (a player's report: it let Horde and Alliance find each other for PvP).
+
 ## v0.8.7 (2026-11-12)
 
 Nothing new for retail: v0.8.7 fixes Questie's icons on WoW Forever.

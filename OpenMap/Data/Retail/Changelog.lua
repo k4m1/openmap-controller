@@ -4,6 +4,10 @@
 local _, ns = ...
 
 ns.MapChangelog = {
+	{ version = "v0.8.8", date = "2026-11-13", heads = { [1] = "Fixed", }, items = {
+		"|cff6e2c0aParty and raid markers stay steady|r: one marker per member, moving smoothly. OpenMap's ring now follows Blizzard's own dot where the game places a member, instead of a second dot of its own that lagged behind it; elsewhere OpenMap's dot keeps its highlight and tooltip as it moves. The ring is now a thin gold edge (the wide one round a dark gap read as a target: #158, #170). By puschie286.",
+		"|cff6e2c0aFriends on the map: your own faction only.|r Your place is only shared with, and shown from, players of your own faction: Battle.net friends on the other faction no longer see where you are, nor you them (a player's report: it let Horde and Alliance find each other for PvP).",
+	} },
 	{ version = "v0.8.6", date = "2026-11-12", heads = { [1] = "Improved", }, items = {
 		"|cff6e2c0aIcons stay shown while zooming|r: \"Fade icons while zooming\" is now off for everyone, as zooming is smooth enough with them shown; turn it on again in the menu's On the map tab if you prefer it.",
 	} },
@@ -34,18 +38,5 @@ ns.MapChangelog = {
 		"|cff6e2c0aPanning no longer hitches|r: the map set up to 300 textures' files in a single frame where a pan brought new ground into view, and each set is a load and an upload, so that frame showed as a hitch of about 35 ms. It sets 60 a frame now; the art still fades in, a few frames later.",
 		"|cff6e2c0aThe map no longer stalls a moment after it opens|r: since 0.8.0 OpenMap keeps the map's art loaded while it's closed, then let go of it all in one frame a second into the opening, which the game unloaded at once (about a second's freeze). It now lets go of it a little at a time.",
 		"|cff6e2c0aZooming in notch by notch is smooth again|r: since 0.8.1 the blur came back all at once each time the map stopped, one long frame the next wheel notch landed on. It now waits out a pause between notches and comes back a few zones a frame. Questie's mob paths are worked out once the map stops, not on every frame of a zoom.",
-	} },
-	{ version = "v0.8.1", date = "2026-11-08", heads = { [1] = "New", [3] = "Improved", [6] = "Fixed", }, items = {
-		"|cff6e2c0aQuestie's mob paths on the stitched map|r, drawn over the art for the zones near the view as you zoom in (Questie's own were under the art, and only on the zone's own map).",
-		"|cff6e2c0aDarkening colour|r (Options, under Darkening): the colour unexplored areas are darkened with, picked with the game's colour picker; |cff6e2c0aDefault colour|r brings back the dark one.",
-		"|cff6e2c0aZooming is about four times smoother|r: OpenMap no longer lays out its hidden icons and its blur on every frame of a zoom (the blur comes back a moment after you stop). Found and measured by Peendars.",
-		"|cff6e2c0aFlight masters are easier to see on the map|r: bigger, with a dark outline, and the ones you haven't learned are no longer half see-through (they were lost on the parchment).",
-		"|cff6e2c0aCtrl-click drops a pin can be turned off|r (Options, and the menu's More tab): with Map Pin Enhanced a Ctrl-click dropped two pins, its own and OpenMap's. Off, the menu's Drop a pin still works.",
-		"|cff6e2c0aQuestie's icons show the first time you open the map|r: after a login they could be missing until the map was closed and opened again (Questie was still setting up when OpenMap looked).",
-		"|cff6e2c0aZygor's waypoint shows on the stitched map|r, in the right place and over the art (Zygor uses its own renamed copy of HereBeDragons, which OpenMap didn't know). Traced by robnoord.",
-		"|cff6e2c0aYour class's trainers are found on every language's client|r: on a French client (and the other non-English ones) every class trainer showed as a profession trainer.",
-		"|cff6e2c0aAn NPC who walks about shows once on the map|r: Girl with Puppies in Orgrimmar had a vendor icon at every point of her walk, dozens over the city. An NPC with many spawns in one zone (with Vendors and the other townsfolk on) now has one icon, in the middle of where it walks. Fixed by diegodiaz1256.",
-		"|cff6e2c0aNo friends dot or badge for yourself|r: with Share where you are on, you could show on your own map as a guild member (the guild's roster can spell your realm differently).",
-		"|cff6e2c0aThe map opens at once inside a dungeon|r: each opening loaded the dungeon's map art again, a second or two (longer in dungeons with many floors, whose Floors tab shows every floor). OpenMap now keeps the art of the dungeon you're in loaded, as it does the world map's.",
 	} },
 }
