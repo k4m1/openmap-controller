@@ -60,6 +60,7 @@ local glide                     -- A or X's zoom under way
 local lastX, lastY              -- the pad's cursor on the last frame (screen px): Blizzard re-centres it
                                 --  as A or X changes its map, before the hooks below run
 local dirty = false
+local drag                      -- the mouse's drag under way: { x, y (screen px at its start), u, v, moved }
 local playerWait, hoverWait, groupWait = 0, 0, 0
 local hovered                   -- the icon under the pad's cursor, entered as the mouse would
 local questieLayer              -- Questie's icons, on this view
@@ -521,6 +522,18 @@ function Press(pin)
 end
 
 local function OnUpdate(_, elapsed)
+	-- (the mouse dragging the view: it pans with the cursor, past a few px)
+	if drag then
+		local mx, my = GetCursorPosition()
+		local es = view:GetEffectiveScale()
+		local dx, dy = (mx - drag.x) / es, (my - drag.y) / es
+		if drag.moved or dx * dx + dy * dy > 16 then
+			drag.moved = true
+			local W, H = S.Size()
+			local px = FitPx() * zoom
+			u, v, dirty = drag.u - dx / (W * px), drag.v + dy / (H * px), true
+		end
+	end
 	local x, y = Cursor()
 	local dungeon = mod.DungeonViewShown and mod.DungeonViewShown()
 	local stick = x and mod.PadStickTilt and mod.PadStickTilt() or 0
@@ -874,6 +887,30 @@ local function Setup()
 	canvas:SetSize(1, 1)
 	view:SetScript("OnUpdate", OnUpdate)
 	view:SetScript("OnSizeChanged", function() dirty = true end)
+	-- the mouse too, for those who play with both (#234): the wheel zooms about the cursor, a drag pans,
+	-- a click is A (left) or X (right) there. On the view itself: Blizzard's map underneath is left alone
+	view:EnableMouse(true)
+	view:EnableMouseWheel(true)
+	view:SetScript("OnMouseWheel", function(_, delta)
+		local sx, sy = Offset(GetCursorPosition())
+		glide, stickZoomAt = nil, GetTime()
+		ZoomAbout(sx, sy, zoom * (delta > 0 and 1.25 or 0.8))
+	end)
+	view:SetScript("OnMouseDown", function(_, button)
+		if button ~= "LeftButton" then return end
+		local mx, my = GetCursorPosition()
+		drag, glide = { x = mx, y = my, u = u, v = v }, nil
+	end)
+	view:SetScript("OnMouseUp", function(_, button)
+		local d = drag
+		drag = nil
+		if (d and d.moved) or (button ~= "LeftButton" and button ~= "RightButton") then return end
+		lastX, lastY = GetCursorPosition()
+		local h = hovered
+		hovered = nil          -- (the pad's icon isn't the mouse's; OpenMap's icons take their own clicks)
+		Step(button == "LeftButton")
+		hovered = h
+	end)
 	map:HookScript("OnShow", Show)
 	map:HookScript("OnHide", Hide)
 	-- A and X: after Blizzard's own (GamepadMapClick, GamepadMapUp) on its map underneath
