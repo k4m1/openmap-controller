@@ -1076,9 +1076,10 @@ function mod.PadQuestiePaths(on)
 end
 
 -- Zygor's map lines, ant dots and waypoint icons (#218): Zygor sizes them by Pointer.iconScale, which it
--- works out for Blizzard's zoom range; at the stitched map's zoom it comes out tiny (a line a grey
--- hairline). Held at 1 there: a line as thick as Zygor's "map line thickness", its dots and icons their
--- own size, as on Blizzard's map at its first zoom. Off the stitched map Zygor's own value stands.
+-- works out for Blizzard's zoom range; at the stitched map's zoom it comes out a grey hairline zoomed in
+-- and far too wide zoomed out. Set there so they're the same size on screen at every zoom: a line as
+-- thick as Zygor's "map line thickness", its dots and icons their own size. Off the stitched map
+-- Zygor's own value stands.
 local zygorHooked
 local function HookZygor()
 	if zygorHooked then return end
@@ -1088,8 +1089,12 @@ local function HookZygor()
 	zygorHooked = true
 	-- (Zygor's zoom step: RescaleMarkers, then its lines drawn from iconScale)
 	hooksecurefunc(pointer, "RescaleMarkers", function()
-		if not mod.IsStitched() or pointer.iconScale == 1 then return end
-		pointer.iconScale = 1
+		if not mod.IsStitched() then return end
+		local canvasScale = map:GetCanvas():GetEffectiveScale()
+		if not canvasScale or canvasScale <= 0 then return end
+		local want = UIParent:GetEffectiveScale() / canvasScale   -- (the canvas' units to the UI's)
+		if pointer.iconScale == want then return end
+		pointer.iconScale = want
 		for _, way in ipairs(pointer.waypoints or {}) do way:SetIcon() end
 		for _, way in ipairs(pointer.waypoints_ants or {}) do way:SetIcon() end
 	end)
