@@ -1267,11 +1267,6 @@ local function Setup()
 		ApplyZoom()
 		if mod.OnHostMapChanged then mod.OnHostMapChanged() end
 		if mod.RefreshPortrait then pcall(mod.RefreshPortrait) end   -- (OpenMap's icon only while stitching)
-		-- (inside Blizzard's map change: a failure here is reported, never left to break it)
-		if mod.RefreshNav then
-			local ok, err = pcall(mod.RefreshNav, mod)
-			if not ok then geterrorhandler()(err) end
-		end
 	end
 	dp.OnHide = function()
 		live = nil

@@ -410,7 +410,7 @@ local RING_SIZE, RING_GAP_SIZE = 19, 15
 local ROUGH_ALPHA = 0.55            -- the dot of someone known only by zone
 local ROUGH_SPREAD = 0.006          -- world (normalized): between those known only by zone, in the same zone
 
-local nativeRings, nativeRingsUnavailable
+local nativeRings, nativeRingsUnavailable, ringHandoff
 
 local function HideNativeRings()
 	if nativeRings and nativeRings.frame:IsShown() then nativeRings.frame:Hide() end
@@ -444,17 +444,18 @@ local function DrawNativeRings(stockPin, host, units, roster, size)
 	-- The hollow rim sits under the native dot and player arrow.
 	local level = math.max(0, stockPin:GetFrameLevel() - 1)
 	if frame:GetFrameLevel() ~= level then frame:SetFrameLevel(level) end
-	if state.host ~= host or state.roster ~= roster or state.size ~= size then
-		if state.host ~= host then
-			frame:SetUiMapID(host)
-			if frame:GetUiMapID() ~= host then error("ring frame did not accept the map ID") end
-		end
+	if state.host ~= host then
+		frame:SetUiMapID(host)
+		if frame:GetUiMapID() ~= host then error("ring frame did not accept the map ID") end
+		state.host = host
+	end
+	if state.roster ~= roster or state.size ~= size then
 		frame:ClearUnits()
 		for _, unit in ipairs(units) do
 			frame:AddUnit(unit, asset, size, size, 1, 1, 1, 1, 7, false)
 		end
 		frame:FinalizeUnits()
-		state.host, state.roster, state.size = host, roster, size
+		state.roster, state.size = roster, size
 	end
 	state.stockPin, state.units = stockPin, units
 	if not frame:IsShown() then frame:Show() end
@@ -577,19 +578,34 @@ local function UpdateGroupPin(pin, unit, u, v, zone)
 	return pin
 end
 
-local function RefreshGroup()
+local function KeepRingDuringHandoff(unit, host, id)
+	if not ringHandoff or ringHandoff.members[unit] ~= id then return false end
+	local u, v = UnitWorld(unit)
+	if not u then return true end
+	local l, r, t, b = S.Rect(host)
+	return l and u >= l and u <= r and v >= t and v <= b
+end
+
+local function RefreshGroup(afterMapChange)
 	if not groupSet then return end
 	-- (the controller view, PadView.lua: Blizzard's map underneath unseen, so every one of them here)
 	local padView = mod.PadViewOn and mod.PadViewOn()
 	if not mod.db.group or not (mod.IsStitched() or padView) or not IsInGroup() then
+		ringHandoff = nil
+		if nativeRings then nativeRings.members = nil end
 		HideNativeRings()
 		S.ClearPinSet(groupSet)
 		wipe(groupPins)
 		return
 	end
 	local host = not padView and mod.HostMap() or nil
+	if ringHandoff and (ringHandoff.host ~= host or GetTime() >= ringHandoff.expires) then ringHandoff = nil end
 	local raid = IsInRaid()
 	local stockPin = NativeGroupPin(host)
+	if afterMapChange and ringHandoff and not stockPin then
+		HideNativeRings()
+		return
+	end
 	local members, eligible, units, roster = {}, {}, {}, {}
 	for i = 1, raid and 40 or 4 do
 		local unit = (raid and "raid" or "party") .. i
@@ -597,15 +613,22 @@ local function RefreshGroup()
 			members[#members + 1] = unit
 			if stockPin then
 				local x, y = UnitMapPosition(unit, host)
-				if x and x >= 0 and x <= 1 and y >= 0 and y <= 1 then
-					eligible[unit] = true
-					units[#units + 1] = unit
-					roster[#roster + 1] = unit .. "=" .. (Safe.Call(UnitGUID, unit) or "")
+				local onMap = x and x >= 0 and x <= 1 and y >= 0 and y <= 1
+				if onMap or (not x and ringHandoff and ringHandoff.members[unit]) then
+					local guid = Safe.Call(UnitGUID, unit)
+					local id = guid or unit
+					if onMap or KeepRingDuringHandoff(unit, host, id) then
+						eligible[unit] = id
+						units[#units + 1] = unit
+						roster[#roster + 1] = unit .. "=" .. (guid or "")
+						if not onMap then rosterWait = math.min(rosterWait, 0.02) end
+					end
 				end
 			end
 		end
 	end
 	local hasNativeRings = TryNativeRings(stockPin, host, units, table.concat(roster, " "))
+	if nativeRings then nativeRings.members = hasNativeRings and eligible or nil end
 	local inZone, seen = {}, {}
 	for _, unit in ipairs(members) do
 		if not (hasNativeRings and eligible[unit]) then
@@ -656,9 +679,31 @@ function mod:BuildNav()
 	RefreshWaypoint()
 end
 
+local function RefreshNav()
+	RefreshWaypoint()
+	local host = mod.HostMap()
+	if host and host ~= S.WORLD and nativeRings and nativeRings.host ~= host and nativeRings.members then
+		-- A native dot can already be on the new map while the Lua position catches up.
+		ringHandoff = { host = host, members = nativeRings.members, expires = GetTime() + 0.1 }
+	end
+	if map:IsShown() then RefreshGroup(true) end
+	rosterWait = 0
+end
+
 function mod:SetupNav(worldMap)
 	map, sc = worldMap, worldMap.ScrollContainer
-	map:HookScript("OnHide", HideNativeRings)
+	map:HookScript("OnHide", function()
+		ringHandoff = nil
+		if nativeRings then nativeRings.members = nil end
+		HideNativeRings()
+	end)
+	if type(map.OnMapChanged) == "function" then
+		-- Blizzard's providers have switched their pins by the time this hook runs.
+		hooksecurefunc(map, "OnMapChanged", function()
+			local ok, err = pcall(RefreshNav)
+			if not ok then geterrorhandler()(err) end
+		end)
+	end
 	if type(map.OnCanvasScaleChanged) == "function" then
 		hooksecurefunc(map, "OnCanvasScaleChanged", mod.RefreshNativeRingLayout)
 	end
@@ -686,13 +731,6 @@ function mod:SetupNav(worldMap)
 		rosterWait = 0.5
 		RefreshGroup()
 	end)
-end
-
--- the map underneath changed: stitched or not, and the group's places on it
-function mod:RefreshNav()
-	RefreshWaypoint()
-	if nativeRings and nativeRings.host ~= mod.HostMap() then HideNativeRings() end
-	rosterWait = 0 -- Blizzard's group pin may still report the previous map in this callback
 end
 
 function mod:NavOptions(opts, get, set, off)

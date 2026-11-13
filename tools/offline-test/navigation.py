@@ -336,6 +336,9 @@ class GroupPinTests(unittest.TestCase):
             stockPin.GetUiMapID = function() return stockHost end
             stockPin.SetUiMapID = function(_, mapID) stockHost = mapID end
             worldMap.SetMapID = function(_, mapID) host = mapID end
+            worldMap.OnMapChanged = function(_, deferStockPin)
+                if not deferStockPin then stockPin:SetUiMapID(host) end
+            end
             worldMap.GetCanvas = function() return canvas end
             local canvasScale = 2
             worldMap.GetCanvasScale = function() return canvasScale end
@@ -451,13 +454,19 @@ class GroupPinTests(unittest.TestCase):
     def test_native_ring_returns_on_the_first_update_after_a_host_switch(self):
         self._setup_native_map()
         self.lua.execute("""
+            C_Map.GetMapRectOnMap = function(id)
+                if id == 4 then return .1, .2, .1, .2 end
+                return 0, 1, 0, 1
+            end
+            first.x = .7
             worldMap:Show()
             RunOnUpdate(.016) -- advance past the opening refresh
             local ring = ringFrame
             assert(ring:IsShown() and ring:GetUiMapID() == 3 and ring.units[1] == "party1")
 
             worldMap:SetMapID(4)
-            mod:RefreshNav() -- the stock group pin still reports the old map here
+            worldMap:OnMapChanged(true) -- the stock group pin still reports the old map here
+            assert(#group.pins == 1 and group.pins[1].unit == "party2")
             stockPin:SetUiMapID(4)
             RunOnUpdate(.016)
 
@@ -465,6 +474,56 @@ class GroupPinTests(unittest.TestCase):
                 "the native ring missed the first frame after the stock pin changed maps")
             assert(#ring.units == 1 and ring.units[1] == "party2")
             assert(#group.pins == 1 and group.pins[1].unit == "party1")
+            assert(#ERRORS == 0, ERRORS[1])
+        """)
+
+    def test_city_handoff_keeps_the_ring_and_uses_fallback_outside(self):
+        self._setup_native_map()
+        self.lua.execute("""
+            C_Map.GetMapRectOnMap = function(id)
+                if id == 4 then return .1, .2, .1, .2 end
+                return 0, 1, 0, 1
+            end
+            first.x, first.y = .15, .15
+            second.x, second.y, second.zone = .7, .7, 3
+            local cityPosition
+            local position = C_Map.GetPlayerMapPosition
+            C_Map.GetPlayerMapPosition = function(id, unit)
+                if id == 4 and unit == "party1" then return cityPosition end
+                return position(id, unit)
+            end
+
+            worldMap:Show()
+            RunOnUpdate(.016)
+            local ring = ringFrame
+            assert(#ring.units == 2 and #group.pins == 0)
+            worldMap:SetMapID(4)
+            worldMap:OnCanvasScaleChanged(2) -- the stock pin still has the old map ID
+            worldMap:OnMapChanged()
+            assert(ringFrame == ring and ring:IsShown() and ring:GetUiMapID() == 4)
+            assert(#ring.units == 1 and ring.units[1] == "party1")
+            assert(#group.pins == 1 and group.pins[1].unit == "party2")
+
+            local units = ring.units
+            RunOnUpdate(.016)
+            assert(ring.units == units and #group.pins == 1)
+            cityPosition = { x = .5, y = .5 }
+            NOW = NOW + .03
+            RunOnUpdate(.03)
+            assert(ring.units == units and #group.pins == 1)
+
+            worldMap:SetMapID(3)
+            worldMap:OnMapChanged()
+            assert(ringFrame == ring and ring:IsShown() and ring:GetUiMapID() == 3)
+            assert(#ring.units == 2 and #group.pins == 0)
+
+            cityPosition = nil
+            worldMap:SetMapID(4)
+            worldMap:OnMapChanged()
+            RunOnUpdate(.016)
+            NOW = NOW + .11
+            RunOnUpdate(.11)
+            assert(not ring:IsShown() and #group.pins == 2)
             assert(#ERRORS == 0, ERRORS[1])
         """)
 
