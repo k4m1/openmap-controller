@@ -361,7 +361,7 @@ class GroupPinTests(unittest.TestCase):
                     frame.ClearUnits = function(self) self.units = {} end
                     frame.AddUnit = function(self, unit, asset, width, height)
                         assert(asset:sub(-13) == "GroupRing.tga")
-                        assert(width == 19 * nativeIconScale / worldMap:GetCanvasScale() and height == width)
+                        assert(width == 16 * nativeIconScale / worldMap:GetCanvasScale() and height == width)
                         self.unitWidth = width
                         self.units[#self.units + 1] = unit
                     end
@@ -382,7 +382,7 @@ class GroupPinTests(unittest.TestCase):
                 assert(#ringFrame.units == 1 and ringFrame.units[1] == "party1")
                 assert(#group.pins == 1 and group.pins[1].unit == "party2")
                 local fallback = group.pins[1]
-                assert(fallback.Ring:GetWidth() == 19 and fallback.RingGap:GetWidth() == 15 and fallback:GetWidth() == 12)
+                assert(fallback.Ring:GetWidth() == 16 and fallback.RingGap == nil and fallback:GetWidth() == 12)
             end
 
             worldMap:Show()
@@ -414,18 +414,18 @@ class GroupPinTests(unittest.TestCase):
         self.lua.execute("""
             worldMap:Show()
             local ring = ringFrame
-            assert(ring.unitWidth == 9.5)
+            assert(ring.unitWidth == 8)
 
             mod.db.iconScale = .6
             mod.RefreshNativeRingLayout()
-            assert(ring.unitWidth == 9.5) -- the stock size has not changed yet
+            assert(ring.unitWidth == 8) -- the stock size has not changed yet
             nativeIconScale = .6
             mod.RefreshNativeRingLayout()
-            assert(ringFrame == ring and math.abs(ring.unitWidth - 5.7) < 1e-6)
+            assert(ringFrame == ring and math.abs(ring.unitWidth - 4.8) < 1e-6)
 
             nativeIconScale = 2
             mod.RefreshNativeRingLayout()
-            assert(ringFrame == ring and ring.unitWidth == 19)
+            assert(ringFrame == ring and ring.unitWidth == 16)
         """)
 
     def test_native_ring_resizes_on_canvas_scale_change(self):
@@ -433,14 +433,14 @@ class GroupPinTests(unittest.TestCase):
         self.lua.execute("""
             worldMap:Show()
             local ring, fallback = ringFrame, group.pins[1]
-            assert(ring.unitWidth == 9.5)
+            assert(ring.unitWidth == 8)
             worldMap:OnCanvasScaleChanged(4)
-            assert(ringFrame == ring and ring.unitWidth == 4.75 and group.pins[1] == fallback)
+            assert(ringFrame == ring and ring.unitWidth == 4 and group.pins[1] == fallback)
             local units = ring.units
             worldMap:OnCanvasScaleChanged(4)
             assert(ring.units == units)
             worldMap:OnCanvasScaleChanged(2)
-            assert(ringFrame == ring and ring.unitWidth == 9.5 and group.pins[1] == fallback)
+            assert(ringFrame == ring and ring.unitWidth == 8 and group.pins[1] == fallback)
 
             units = ring.units
             stockPin:SetFrameLevel(74)

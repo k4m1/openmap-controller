@@ -403,10 +403,10 @@ end
 local groupSet, groupLooks, groupPins = nil, {}, {}
 local rosterWait = 0
 local DOT = { atlas = "WhiteCircle-RaidBlips", texture = "Interface\\Minimap\\PartyRaidBlips" }
--- The gold band distinguishes group dots from guild and friend dots (Friends.lua).
-local RING = { atlas = DOT.atlas, texture = DOT.texture, color = { 1, 0.82, 0, 1 } }
-local RING_GAP = { atlas = DOT.atlas, texture = DOT.texture, color = { 0, 0, 0, 1 } }
-local RING_SIZE, RING_GAP_SIZE = 19, 15
+-- The gold edge distinguishes group dots from guild and friend dots (Friends.lua): thin, right round the
+-- dot (a wide one round a dark gap read as a target: #158, #170)
+local RING_TEXTURE = (ns.Media and ns.Media.path or "") .. "Textures\\GroupRing.tga"   -- (tools/icon/group_ring.py)
+local RING_SIZE = 16
 local ROUGH_ALPHA = 0.55            -- the dot of someone known only by zone
 local ROUGH_SPREAD = 0.006          -- world (normalized): between those known only by zone, in the same zone
 
@@ -425,7 +425,7 @@ local function NativeGroupPin(host)
 end
 
 local function DrawNativeRings(stockPin, host, units, roster, size)
-	local asset = ns.Media.path .. "Textures\\GroupRing.tga"
+	local asset = RING_TEXTURE
 	if not nativeRings then
 		local canvas = map:GetCanvas()
 		local frame = CreateFrame("UnitPositionFrame", nil, canvas)
@@ -481,11 +481,7 @@ local function Ring(pin)
 	pin.Ring = pin:CreateTexture(nil, "BACKGROUND")
 	pin.Ring:SetSize(RING_SIZE, RING_SIZE)
 	pin.Ring:SetPoint("CENTER")
-	S.Look(pin.Ring, RING)
-	pin.RingGap = pin:CreateTexture(nil, "BORDER")
-	pin.RingGap:SetSize(RING_GAP_SIZE, RING_GAP_SIZE)
-	pin.RingGap:SetPoint("CENTER")
-	S.Look(pin.RingGap, RING_GAP)
+	pin.Ring:SetTexture(RING_TEXTURE)
 end
 
 local function GroupLook(unit)

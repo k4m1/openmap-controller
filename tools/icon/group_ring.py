@@ -1,4 +1,5 @@
-"""Build the native group ring from Blizzard's WhiteCircle-RaidBlips sprite.
+"""Build the native group ring from Blizzard's WhiteCircle-RaidBlips sprite: a thin gold edge round the
+dot (the dot itself is Blizzard's, in the middle), as Map/Nav.lua's own ring (RING_SIZE) draws it.
 
 Usage: python -P tools/icon/group_ring.py <World of Warcraft folder>
 """
@@ -10,7 +11,7 @@ from PIL import Image, ImageChops
 
 ROOT = Path(__file__).resolve().parents[2]
 SIZE = 64
-OUTER, GAP, CENTER = 19, 15, 12
+OUTER, CENTER = 16, 12
 ATLAS_FILE_ID = 1523129
 # WhiteCircle-RaidBlips, UiTextureAtlasMember 6220 on the 64x32 atlas 867.
 SPRITE_BOX = (1, 1, 20, 19)
@@ -37,12 +38,11 @@ def texture(wow):
     sprite = atlas.crop(SPRITE_BOX)
 
     outer = layer(sprite, OUTER)
-    outer = ImageChops.multiply(outer, Image.new("RGBA", outer.size, (255, 209, 0, 255)))
-    gap = Image.new("RGBA", outer.size)
-    gap.putalpha(layer(sprite, GAP).getchannel("A"))
-    ring = Image.alpha_composite(outer, gap)
+    # (solid gold in the sprite's shape: tinted, its dark rim would make the thin edge dark, not gold)
+    ring = Image.new("RGBA", outer.size, (255, 209, 0, 255))
+    ring.putalpha(outer.getchannel("A"))
 
-    # The native dot supplies the center of the original three-layer pin.
+    # The native dot supplies the center.
     center = layer(sprite, CENTER).getchannel("A")
     ring.putalpha(ImageChops.multiply(ring.getchannel("A"), ImageChops.invert(center)))
     return ring
