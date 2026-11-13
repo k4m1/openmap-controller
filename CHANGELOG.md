@@ -13,6 +13,12 @@
 
 ### Fixed
 
+- **Your quests' icons show in the controller view** (Options' "OpenMap's map with the Gamepad UI"):
+  there were none, and no tooltips. Every quest in your log is now OpenMap's icon there, at any zoom,
+  in every zone (with "Quests from every zone" off: the zone Blizzard's map is on); A tracks the quest
+  and zooms to it. The "!" of quests you can start in that zone are there too, with the quest's name
+  on the tooltip. The shaded quest areas aren't on it yet (#225). By k4m1.
+
 - **Zygor's map line stays thick on the stitched map**: Zygor's route line (and its dots and waypoint
   icons) shrank to a thin grey line zoomed in and grew far too wide zoomed out, as Zygor sizes them for
   Blizzard's zoom range; they now stay the same size on screen at every zoom (#218). By rogeriocamorim.
