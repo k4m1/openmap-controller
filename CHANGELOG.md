@@ -1,5 +1,13 @@
 # OpenMap changelog
 
+## Unreleased
+
+### New
+
+- **Hide world markers in instances**: an optional temporary filter hides OpenMap's friends,
+  guild, transport and world quest markers in dungeons, raids and battlegrounds. Group members
+  and other addons' maps and markers remain visible; marker preferences are kept on leaving.
+
 ## v0.8.7 (2026-11-12)
 
 ### Fixed
