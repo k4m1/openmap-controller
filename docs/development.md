@@ -123,7 +123,7 @@ table CSVs, `<tex>` a texture cache. Order matters where one step reads another'
 | 17d | `tools/map-dungeons/minimap.py <cache> <WoW folder> [--preview <dir>]` (`--survey <mapID>`: a dungeon's rooms and their heights) | `MapDungeonMinimap/`, `Data/DungeonMinimap.lua` | `tools/map-dungeons/minimap.json` (the floors) |
 | 17e | `tools/map-dungeons/bosses.py <cache> [--import <OpenMap.lua SavedVariables>]` | `Data/DungeonBosses.lua` | 17, 17a, 17d, `tools/map-dungeons/bosses.json` |
 | 17b | `tools/map-chart/build.py <db2> <tex>` (his layers from his file first: `tools/map-chart/export.py <psd>`) | `MapChart/`, `Data/Chart.lua` | `art/drawn/chart/` |
-| 17c | `tools/map-tiles/build.py <WoW folder>` (Forever) | `MapTile/` (the cave and dungeon tiles, drawn from OpenMap's copies: `Data/Forever/Tiles.lua`) | 4, 17 |
+| 17c | `tools/map-tiles/build.py <WoW folder>` (Forever) | `MapTile/` (the cave and dungeon tiles and Gilneas's map in the gaps, drawn from OpenMap's copies: `Data/Forever/Tiles.lua`) | 4, 17 |
 | 18 | `tools/locale/translate.py build` (after any change to the translations or to the English in `L[...]`) | `Locales/`, the toc's `## Notes-<locale>` lines | `tools/locale/*.json` |
 
 Text the player reads goes through `ns.L["English"]` (or `L[...]`), never a bare string: the

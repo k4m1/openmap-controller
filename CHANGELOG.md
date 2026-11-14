@@ -72,6 +72,11 @@
   icons) shrank to a thin grey line zoomed in and grew far too wide zoomed out, as Zygor sizes them for
   Blizzard's zoom range; they now stay the same size on screen at every zoom (#218). By rogeriocamorim.
 
+- **Gilneas shows on every language's client**: on the Russian and Latin American Spanish clients
+  Gilneas was a solid green square, as the game doesn't have its map's art in those languages (as
+  with the dungeon and cave maps before v0.8.5). OpenMap now brings those tiles itself (#152).
+  Found and tested by XaksFlaX. (New textures: restart the game.)
+
 - **Dungeon level ranges**: the dungeons' levels on the map are now the ones the game's Group Finder
   gives (each Scarlet Monastery and Dire Maul wing its own); they were an old level each, five levels
   wide, and some were far off: Razorfen Kraul showed 24-29 for a dungeon of 29-38 (#201). By ConfusionOrb221.
