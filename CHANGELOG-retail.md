@@ -1,6 +1,6 @@
 # OpenMap changelog
 
-## Unreleased
+## v0.8.9 (2026-11-14)
 
 ### New
 

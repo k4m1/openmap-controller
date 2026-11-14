@@ -4,7 +4,7 @@
 local _, ns = ...
 
 ns.MapChangelog = {
-	{ version = "Unreleased", date = "", heads = { [1] = "New", [4] = "Improved", [9] = "Fixed", }, items = {
+	{ version = "v0.8.9", date = "2026-11-14", heads = { [1] = "New", [4] = "Improved", [9] = "Fixed", }, items = {
 		"|cff6e2c0aHide world markers in instances|r (the menu's On the map tab, and Options; off unless turned on): in dungeons, raids and battlegrounds, OpenMap's friends, guild, transport and all-zone quest markers step aside. With Dungeon maps off and another addon's dungeon map shown over the world (NeedRoll's), the world under it stops answering the mouse, and a right-click brings the world map back, at the dungeon's outdoor entrance (#232). By HonzoNebro.",
 		"|cff6e2c0aPin options|r (OpenMap's options, Moving about and Sharing): - |cff6e2c0aFollow new pins|r: on by default, as before. Off, a pin you drop doesn't become the waypoint, so addons that route to it (Shortest Path Forever) are left alone; the pin's Follow still sets it. - |cff6e2c0aSend new pins to group|r: a pin you drop goes to your party or raid once its card is closed. - |cff6e2c0aAuto-add group's pins|r: pins your party or raid shares are added without asking. By diegodiaz1256.",
 		"|cff6e2c0aA map of Blackmaw Hold|r, drawn by Santiago Reyes: all six of its floors, from Blackmaw Grove and the Festering Grotto down to the Depths of Forbidden Magic (the floor list at the top of the dungeon's map, or its arrows). (New textures: restart the game.)",
