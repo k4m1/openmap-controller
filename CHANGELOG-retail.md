@@ -25,6 +25,9 @@
 
 ### Fixed
 
+- **One arrow for you, not two**: where OpenMap draws your arrow itself (the map underneath can't
+  place you), Blizzard's arrow now steps aside, so the two no longer show a little apart (#229).
+
 - **Quests from the tracker open on their details**: the first click on a tracked quest opened the
   map on the quest list; it shows the quest's text now (#224).
 

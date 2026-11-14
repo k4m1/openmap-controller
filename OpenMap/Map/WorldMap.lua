@@ -494,7 +494,11 @@ local blipHidden = setmetatable({}, { __mode = "k" })    -- pin -> { unit = true
 local blipHooked = setmetatable({}, { __mode = "k" })
 local groupBlipSizes = setmetatable({}, { __mode = "k" })
 local loweredGroupBlips = setmetatable({}, { __mode = "k" })
-local function BlipOff(unit) return mod.instanceWorldHidden or mod.db[BLIP_UNITS[unit]] == false end
+local function BlipOff(unit)
+	if mod.instanceWorldHidden or mod.db[BLIP_UNITS[unit]] == false then return true end
+	-- OpenMap's own arrow up (the map underneath couldn't place you): Blizzard's goes, one arrow not two (#229)
+	return unit == "player" and active and S.PlayerShown and S.PlayerShown() or false
+end
 local function Locked(pin) return pin:IsProtected() and InCombatLockdown() end
 -- Blizzard's arrow and group dots default to sublevel 7 within the same frame.
 local function LayerGroupBlips(pin)
@@ -1673,6 +1677,7 @@ function mod:Diag()
 	end
 	if next(after.close) then ns:Print("As the map last closed (ms): %s.", Worst(after.close)) end
 	if mod.dungeonOpenMs then ns:Print("Opening the latest dungeon's map took %.0f ms (OpenMap's part).", mod.dungeonOpenMs) end
+	if mod.FlightStatus then ns:Print("%s", mod.FlightStatus()) end
 	local registered, shown, placed, ours, moved
 	if mod.QuestieStatus then registered, shown, placed, ours, moved = mod.QuestieStatus() end
 	if registered then

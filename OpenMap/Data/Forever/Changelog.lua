@@ -13,6 +13,7 @@ ns.MapChangelog = {
 		"|cff6e2c0aThe controller view's switch in the map's menu too|r: \"OpenMap's map with the Gamepad UI (test)\" is under The map in OpenMap's menu as well as in Options (it was only in Esc > Options > AddOns, and a player took it for gone).",
 		"|cff6e2c0aQuestie's quest icons in front|r: a \"!\" or \"?\" is no longer hidden under a flight master or a dungeon's icon; Questie's townsfolk stay under OpenMap's icons (#92).",
 		"|cff6e2c0aA word about MapUtils|r: with MapUtils on, OpenMap says once in chat that the two both change the map's zoom, which made the map and Blizzard's quest areas jump while zooming (#160).",
+		"|cff6e2c0aOne arrow for you, not two|r: where OpenMap draws your arrow itself (the map underneath can't place you), Blizzard's arrow now steps aside, so the two no longer show a little apart (#229).",
 		"|cff6e2c0aQuests from the tracker open on their details|r: the first click on a tracked quest opened the map on the quest list; it shows the quest's text now (#224).",
 		"|cff6e2c0aThe map cooler on your graphics card|r: OpenMap's \"Map frame rate cap\" is now 60 by default (and set to 60 once for everyone): a still map was drawn as fast as the card could go (#233). Turn it off in Options if you'd rather.",
 		"|cff6e2c0aFade while moving fades while you steer with the mouse|r: the hidden cursor's last place over the map held it solid, so it hardly ever faded (#69).",

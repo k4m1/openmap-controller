@@ -2159,6 +2159,8 @@ function S.PlacePlayer()
 	if player.facing then arrow:SetRotation(player.facing) end
 	arrow:Show()
 end
+-- (our arrow up: WorldMap.lua sizes Blizzard's away, so there's one, not two: #229)
+function S.PlayerShown() return arrow ~= nil and arrow:IsShown() end
 
 -- our arrow over every icon on the map, at frame level `level` (WorldMap.lua: with Blizzard's own)
 function S.RaiseArrow(level)
