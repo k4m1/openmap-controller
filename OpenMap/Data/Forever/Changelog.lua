@@ -5,6 +5,7 @@ local _, ns = ...
 
 ns.MapChangelog = {
 	{ version = "Unreleased", date = "", heads = { [1] = "Fixed", }, items = {
+		"|cff6e2c0aThe map's first opening is a shorter frame|r: the first time the map opened in a session, OpenMap made all of its zones' tiles in that one frame (a stand-in world of the real map's size: 4600 regions, 148 ms of Lua offline; 73 ms in game on a player's). The zones' tiles are now made in the 14 or so frames after, a few ms of each, in the order they were made in, so they draw over each other as they did. A zone you open the map on comes a fraction of a second after the rest (its base art is there from the first frame, its detail fades in as it does anyway).",
 		"|cff6e2c0aFewer hitches zooming out|r: the first zoom out of a session made the lettering of every continent and sea name (hundreds of font strings) in one frame; one name is made a frame now. And the tiles fading in as you zoom out set their opacity in 8 steps instead of on every frame, a third to a half fewer calls to the client for a zoom out. The offline test tools/offline-test/perf.py counts both.",
 	} },
 	{ version = "v0.8.9", date = "2026-11-14", heads = { [1] = "New", [4] = "Improved", [9] = "Fixed", }, items = {

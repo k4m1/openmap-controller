@@ -626,6 +626,31 @@ ForEachPiece = function(mapID, fn)
 	end
 end
 
+-- How many tiles PlaceOverlays would make for a zone, with none made (and the zone's pieces known, as
+-- they are once it's placed): what says whether it's a zone or a city, and where Shade.Under looks
+function S.CountOverlays(mapID)
+	local p = Place(mapID)
+	if not p then return 0 end
+	local explored = C_MapExplorationInfo.GetExploredMapTextures(mapID) or {}
+	local reveal = ns.MapReveal and ns.MapReveal[C_Map.GetMapArtID(mapID) or 0]
+	if #explored == 0 and not reveal then return 0 end
+	local tw, th = p.layer.tileWidth, p.layer.tileHeight
+	local n = 0
+	ForEachPiece(mapID, function(files, _, _, w, h)
+		local cols, rows = math.ceil(w / tw), math.ceil(h / th)
+		for j = 1, rows do
+			local ph = (j < rows) and th or (h - (rows - 1) * th)
+			for k = 1, cols do
+				local f = files[(j - 1) * cols + k]
+				local file = tonumber(f) or f
+				local pw = (k < cols) and tw or (w - (cols - 1) * tw)
+				if file and pw > 0 and ph > 0 and not (ns.MapBlank and ns.MapBlank[file]) then n = n + 1 end
+			end
+		end
+	end)
+	return n
+end
+
 -- A zone's overlays: explored ones from the client, the rest from the reveal data.
 -- Drawn twice: whole (with their parchment halos) on overlayRoot, and their
 -- interior (MapCore) on coreRoot, above every zone's halo.
@@ -1421,11 +1446,14 @@ function S.Build(parent, artLevel, range, iconLevel)
 	end
 	table.sort(zones, function(a, b) return area[a.mapID] > area[b.mapID] end)
 	local level = artLevel + 2
+	local work = {}
 	for _, info in ipairs(zones) do
 		-- (a zone, or a city: as its client's list has it, else a zone without explored-area pieces is a city)
 		local stitched, kind = S.Stitched(info.mapID)
 		if area[info.mapID] > 0 and stitched then
-			local n = kind ~= 2 and PlaceOverlays(info.mapID) or 0
+			-- (counted, not made: a zone's tiles are made after the map opens, S.BuildZones; its frame, its
+			-- level and its pieces are known now, in this order)
+			local n = kind ~= 2 and S.CountOverlays(info.mapID) or 0
 			if kind == 1 or (not kind and n > 0) then
 				level = math.min(level + 1, artLevel + range - 17)
 				local zf = CreateFrame("Frame", nil, tilesRoot)
@@ -1434,8 +1462,7 @@ function S.Build(parent, artLevel, range, iconLevel)
 				if ns.ClientMaps and ns.ClientMaps.detailDensity then S.ZoneByContinent(info.mapID, zf) end
 				-- (a zone with neither pieces nor a territory of its own, an island: a round feather, off its frame)
 				local plain = n == 0 and not (ns.MapTerritories and ns.MapTerritories[info.mapID])
-				S.stats.tiles = S.stats.tiles + PlaceBase(zf, info.mapID, "ARTWORK", graded, plain and FEATHER_ROUND or FEATHER)
-				S.stats.overlays = S.stats.overlays + n
+				work[#work + 1] = { mapID = info.mapID, frame = zf, plain = plain }
 			else
 				tinsert(S.stats.cities, info.mapID)
 				local cf = CreateFrame("Frame", nil, citiesRoot)
@@ -1451,10 +1478,13 @@ function S.Build(parent, artLevel, range, iconLevel)
 				-- (a city cut down to the city, its plan: ns.MapCityCuts, banners.py)
 				local cut = ns.MapCityCuts and ns.MapCityCuts[info.mapID] and TEX .. "MapCityMask\\" .. info.mapID
 				PlaceBase(cf, info.mapID, "ARTWORK", graded, cut or FEATHER_ROUND)
+				-- (a map the client lists as neither: its overlays too)
+				if n > 0 then work[#work + 1] = { mapID = info.mapID } end
 			end
 			S.stats.zones = S.stats.zones + 1
 		end
 	end
+	S.zoneWork = { list = work, at = 1 }
 
 	-- finer maps the client has of land no zone covers (ns.MapGaps.art, gapfill.py: Blizzard's
 	-- unexplored map of Gilneas): its own tiles, at their own resolution, through MapCoastArt
@@ -1525,6 +1555,7 @@ function S.Build(parent, artLevel, range, iconLevel)
 	cities.Build()
 	Baked.Build()
 	BuildPins()
+	S.StartZones()
 	return true
 end
 
@@ -2825,6 +2856,80 @@ ShowZone = function(mapID)
 	end
 	Shade.Show(mapID)
 	Shade.Hide.Show(mapID)
+end
+
+-- The zones' textures are made after the map opens, a few a frame (S.Build plans them: all of them in the
+-- one frame the map opened in was most of its long first frame, 3500 regions in tools/offline-test/perf.py).
+-- In the order they'd have been made in, which is the order they draw in over each other (a smaller zone
+-- over a bigger). A zone is graded and shown as it comes, as one made later by the blur is (BuildBlur)
+-- (fields of S, not locals: the file is at Lua's limit of 200)
+S.ZONES = { budget = 4 }        -- ms of a frame
+
+function S.BuildZone(w)
+	local g0, t0 = #graded + 1, #twins + 1
+	local n = PlaceOverlays(w.mapID)
+	if w.frame then
+		S.stats.tiles = S.stats.tiles + PlaceBase(w.frame, w.mapID, "ARTWORK", graded, w.plain and FEATHER_ROUND or FEATHER)
+	end
+	S.stats.overlays = S.stats.overlays + n
+	-- (a client whose zones come in by continent: the frame its overlays are on now exists)
+	local z = Live.zones and Live.zones[w.mapID]
+	if z then z.pieces = Live.overlayOf and Live.overlayOf[w.mapID] end
+	if lastGrade then
+		local strength, desat = lastGrade[1], lastGrade[2]
+		for i = g0, #graded do GradeEntry(graded[i], desat) end
+		local grade = ns.MapGrade or NONE
+		for i = t0, #twins do
+			local tex, m = twins[i][1], grade[twins[i][2]]
+			if m then
+				tex:SetVertexColor(1 + (m[1] - 1) * strength, 1 + (m[2] - 1) * strength, 1 + (m[3] - 1) * strength, 1)
+				tex:SetDesaturation(desat)
+			end
+		end
+		-- (a zone not found at all: greyed, as ApplyGrade does it)
+		if Shade.on and Shade.Unexplored(w.mapID) == "all" then
+			local list = zoneTex[w.mapID]
+			if list then
+				list.greyed = true
+				for _, e in ipairs(list) do e[1]:SetDesaturation(math.max(desat, Shade.DIMK[4])) end
+			end
+		end
+	end
+	-- (S.Cull's box may not move for a while: the zone is shown, or not, by it now)
+	if cullBox then
+		local l, r, t, b = S.Rect(w.mapID)
+		inView[w.mapID] = (l and r > cullBox[1] and l < cullBox[3] and b > cullBox[2] and t < cullBox[4]) and true or false
+	end
+	ShowZone(w.mapID)
+end
+
+-- ms: how long to work (at least one zone); true when none are left
+function S.BuildZones(ms)
+	local work = S.zoneWork
+	if not work then return true end
+	local t0 = debugprofilestop and debugprofilestop() or 0
+	while work.at <= #work.list do
+		local w = work.list[work.at]
+		work.at = work.at + 1
+		S.BuildZone(w)
+		if debugprofilestop and debugprofilestop() - t0 >= ms then break end
+	end
+	return work.at > #work.list
+end
+
+function S.ZonesPending()
+	local work = S.zoneWork
+	return work and work.at <= #work.list or false
+end
+
+function S.StartZones()
+	if not S.ZonesPending() then return end
+	local f = S.ZONES.frame or CreateFrame("Frame")
+	S.ZONES.frame = f
+	f:SetScript("OnUpdate", function(self)
+		if S.BuildZones(S.ZONES.budget) then self:Hide() end
+	end)
+	f:Show()
 end
 
 -- for the debug overlay (Debug.lua): how much of the zone art has its files loaded, of all of

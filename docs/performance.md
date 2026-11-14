@@ -9,6 +9,7 @@ The test's world is built from the repo's own zone and overlay data (about 40 zo
 
 | # | Cause | Seen as | Done |
 |---|-------|---------|------|
+| 0 | The first opening of the map makes every zone's tiles (and the colour-matched and interior copies of them) in one frame | 4594 regions made in `S.Build`, 3563 of them zone tiles | `S.Build` plans the zones (frame, level, pieces: no regions) and `S.BuildZones` makes their tiles about 4 ms a frame, in the same order: 1032 regions in the opening frame |
 | 1 | Fading tiles set their opacity on every frame (Stitch.lua, the file loader), 700 and more at once while a zoom out brings the continents' tiles in | up to 3000 calls in a step | 8 steps a fade: a third to a half fewer calls |
 | 2 | All names' lettering made in one frame at the first zoom out (a name is hundreds of font strings) | 351 regions made in one step | one name a call: 144 at most |
 | 3 | The live zone art (Unexplored areas: hide, Classic, a client that isn't English) instead of the baked tiles | up to 667 textures drawn at once (231 baked) and 3.7k calls a step | not done: needs baked art for that setting |
@@ -16,6 +17,15 @@ The test's world is built from the repo's own zone and overlay data (about 40 zo
 | 5 | The blur copies stay anchored while hidden | about 230 placed, not drawn | not done: as 4 |
 
 A view that hasn't changed makes no calls (tested), so the cost is in the steps of a zoom, not at rest.
+
+## The zones' tiles come after the opening
+
+`S.Build` counts a zone's tiles (`S.CountOverlays`, which also makes the zones' pieces: cities and
+`Shade.Under` need them all) to say whether it's a zone or a city, gives it its frame and level, and
+queues it. A city's art is made at once. `S.BuildZones(ms)` makes the queued zones in their order (the
+order they draw over each other in), and each is graded, greyed and shown as it comes, as the blur's
+copies are (`BuildBlur`). perf.py checks that the textures, masks, zones, tiles and overlays, and a
+zoom out's counts, come out the same as when they were all made at once.
 
 ## Budgets
 

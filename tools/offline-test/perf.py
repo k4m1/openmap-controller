@@ -114,9 +114,10 @@ function PERF(ns, zooms, start, unexplored)
 	local out = { rows = {} }
 	local view = CreateFrame("Frame", nil, UIParent)
 	local canvas = CreateFrame("Frame", nil, view)
+	local made0, t0 = #FRAMES, os.clock()
 	if not S.Build(canvas, 100, 80, 2000) then return { built = false } end
-	local st = S.stats
-	out.stats = { zones = st.zones, tiles = st.tiles, overlays = st.overlays, pins = st.pins, frames = #FRAMES }
+	-- (the frame the map opens in: what S.Build makes before the first frame after it)
+	out.open = { made = #FRAMES - made0, ms = (os.clock() - t0) * 1000 }
 	S.Layout(S.WORLD)
 	S.ApplyGrade(1, 0.1, unexplored or "show")
 	local parts = S.Parts()[1][2]
@@ -168,7 +169,11 @@ function PERF(ns, zooms, start, unexplored)
 		return { zoom = z, drawn = drawn, placed = placed, icons = icons, calls = calls, ms = ms, kb = kb, by = by, made = #FRAMES - made0 }
 	end
 	-- the map open at the first zoom (settled: its files in), then the zoom out
-	step(zooms[1], 120)
+	-- (a few times over: the map's own ticker sets the view again as zones are made, and the blur follows them)
+	for _ = 1, 4 do step(zooms[1], 30) end
+	out.pending = S.ZonesPending and S.ZonesPending() or false
+	local st = S.stats
+	out.stats = { zones = st.zones, tiles = st.tiles, overlays = st.overlays, pins = st.pins, frames = #FRAMES }
 	for i = 1, #zooms do
 		out.rows[#out.rows + 1] = step(zooms[i], 4)
 	end
@@ -231,6 +236,7 @@ def run(unexplored="show"):
         rows[-1]["by"] = {k: v for k, v in r["by"].items()}
     errs = L.eval("ERRORS")
     stats = {k: res["stats"][k] for k in ("zones", "tiles", "overlays", "pins", "frames")}
+    stats["open_made"], stats["open_ms"], stats["pending"] = res["open"]["made"], res["open"]["ms"], res["pending"]
     return rows, stats, [errs[i] for i in range(1, len(errs) + 1)]
 
 
@@ -245,6 +251,9 @@ def table(rows):
 # draws the zones from the baked tiles; "hide" (Options' Unexplored areas, also Classic) and a client that
 # isn't English draw them live, hundreds of masked textures, which is why it has far higher budgets.
 # Lua time and garbage aren't budgeted: they're the machine's noise, and /openmap bench measures them in game.
+# "open": the regions made in the frame the map opens in (S.Build; the zones' tiles come after, a few a frame)
+OPEN_BUDGET = 1150
+FRAME_BUDGET = 450          # ... and in any frame after, while the zones are made (S.BuildZones)
 BUDGETS = {
     "show": {"drawn": 460, "placed": 1120, "calls": 1330, "made": 160},
     "hide": {"drawn": 735, "placed": 1020, "calls": 4100, "made": 160},
@@ -266,6 +275,32 @@ class ZoomOut(unittest.TestCase):
         self.assertTrue(30 <= stats["zones"] <= 60, stats)
         self.assertTrue(400 <= stats["tiles"] <= 600, stats)
         self.assertTrue(600 <= stats["overlays"] <= 1000, stats)
+
+    def test_the_frame_the_map_opens_in(self):
+        stats = self.runs["show"][1]
+        self.assertLessEqual(stats["open_made"], OPEN_BUDGET, stats)
+        self.assertFalse(stats["pending"], "the zones are all made some frames on")
+
+    def test_zones_are_made_a_few_a_frame(self):
+        L, ns = load_runtime()
+        L.execute("""
+            function ZONEFRAMES(ns)
+                local S = ns.MapStitch
+                local canvas = CreateFrame("Frame", nil, CreateFrame("Frame", nil, UIParent))
+                S.Build(canvas, 100, 80, 2000)
+                local worst, frames = 0, 0
+                while S.ZonesPending() and frames < 500 do
+                    local before = #FRAMES
+                    NOW = NOW + 0.016
+                    RunOnUpdate(0.016)
+                    worst = math.max(worst, #FRAMES - before)
+                    frames = frames + 1
+                end
+                return worst, frames
+            end""")
+        worst, frames = L.eval("ZONEFRAMES")(ns)
+        self.assertLessEqual(worst, FRAME_BUDGET)
+        self.assertTrue(2 <= frames < 100, frames)   # (a few frames: not one, and not seconds)
 
     def test_budgets(self):
         for u, limits in BUDGETS.items():
