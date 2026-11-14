@@ -32,16 +32,23 @@ sys.path.insert(0, HERE)
 import clients
 import world
 
+# (the world is the Forever client's whatever OPENMAP_CLIENT is: its tables stand in for the game's, and the
+# retail build has its own real ones, which this test's made-up maps would fight)
 # (the zoom a player's view starts at in the report, and the steps down to the whole world: a wheel
 # notch is about x0.8 in OpenMap's zoom)
 START_ZOOM = 12.87
 NOTCH = 0.8
 
 
+def read(path, encoding="utf-8"):
+    with open(path, encoding=encoding) as f:
+        return f.read()
+
+
 def synthetic_maps():
-    grade = open(os.path.join(ROOT, "Data", "Forever", "Grade.lua"), encoding="utf-8").read()
+    grade = read(os.path.join(ROOT, "Data", "Forever", "Grade.lua"), "utf-8")
     zones = [int(x) for x in re.findall(r"\[(\d+)\]\s*=", grade) if int(x) < 2000]
-    reveal = open(os.path.join(ROOT, "Data", "Forever", "Reveal.lua"), encoding="utf-8").read()
+    reveal = read(os.path.join(ROOT, "Data", "Forever", "Reveal.lua"), "utf-8")
     arts = [int(x) for x in re.findall(r"^\t\[(\d+)\] = \{", reveal, re.M)]
 
     def art(i):
@@ -181,7 +188,7 @@ def zooms():
 
 def load_runtime():
     L = lupa.LuaRuntime(unpack_returned_tuples=True)
-    L.execute(open(os.path.join(HERE, "stub.lua"), encoding="utf-8").read())
+    L.execute(read(os.path.join(HERE, "stub.lua"), "utf-8"))
     L.execute("MAPS = " + world.lua_val(synthetic_maps()))
     L.execute(world.C_MAP)
     ns = L.eval("{}")
@@ -195,17 +202,17 @@ def load_runtime():
     def expand(rel):
         if not rel.endswith(".xml"): return [rel]
         base = os.path.dirname(rel)
-        src = re.sub(r"<!--.*?-->", "", open(os.path.join(ROOT, rel), encoding="utf-8").read(), flags=re.S)
+        src = re.sub(r"<!--.*?-->", "", read(os.path.join(ROOT, rel), "utf-8"), flags=re.S)
         return [f for m in re.finditer(r'<(Script|Include)\s+file="([^"]+)"', src)
                 for f in expand(os.path.join(base, m.group(2).replace("\\", os.sep)))]
     files = []
-    for line in open(clients.toc(), encoding="utf-8"):
+    for line in read(clients.toc("forever")).splitlines():
         line = line.strip()
         if line and not line.startswith("#"): files += expand(line.split(" [")[0].replace("\\", os.sep))
     for rel in files:
         path = os.path.join(ROOT, rel)
         if not os.path.exists(path): continue     # (a locale the toc lists by condition)
-        ok, err = load(open(path, encoding="utf-8-sig").read(), rel, ns)
+        ok, err = load(read(path, "utf-8-sig"), rel, ns)
         if not ok: raise RuntimeError("LOAD ERROR %s\n%s" % (rel, err))
     L.execute('FireEvent("ADDON_LOADED", "OpenMap") FireEvent("PLAYER_LOGIN") RunTimers(2)')
     L.execute(PROBE)
