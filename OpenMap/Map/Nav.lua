@@ -44,6 +44,12 @@ end
 -- Find me, and reopening where you left off
 --------------------------------------------------------------------------------
 
+function mod.RememberOutsideInstance()
+	local u, v, best = UnitWorld("player")
+	-- No viewport needed: this also runs before the map's first opening.
+	if u then mod.outsideInstanceView = { u, v, best } end
+end
+
 function mod:FindMe(keepZoom)
 	if not mod.IsStitched() and not (mod.PadViewOn and mod.PadViewOn()) then return end
 	local u, v, best = UnitWorld("player")
@@ -127,6 +133,8 @@ function mod:OnMapShown()
 	-- again would have the map underneath follow it, away from a quest's zone the quest log put up)
 	if not mod.SavedView(nil, true) then return end
 	C_Timer.After(0, function()
+		local d = QuestMapFrame and QuestMapFrame.DetailsFrame   -- (a quest's details up: they stay on its map, #224)
+		if d and d:IsShown() then return end
 		local u, v, zoom = mod.SavedView(mod.HostMap(), true)
 		if not u or not mod.IsStitched() then return end
 		local nu, nv, nz = mod.ViewNow()
@@ -652,6 +660,7 @@ local function RefreshGroup(afterMapChange)
 			if u then
 				local id = Safe.Call(UnitGUID, unit) or unit
 				groupPins[id] = UpdateGroupPin(groupPins[id], unit, u, v, zone)
+				groupPins[id].openmapNoPress = true   -- (PadView.lua: nothing to press, the controller's A zooms in under it)
 				seen[id] = true
 			end
 		end

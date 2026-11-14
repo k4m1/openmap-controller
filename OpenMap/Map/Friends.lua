@@ -55,6 +55,10 @@ local zoneByName, classByName, realm
 local last = { at = -math.huge }    -- your place as last sent: map, x, y, at, text
 local sharing = false               -- (a place sent since sharing began: they're told when it stops)
 
+-- whether one of OpenMap's maps is the one on screen: its usual map, or, with the game's Gamepad UI, its
+-- controller view (PadView.lua: the usual map isn't set up then, and IsStitched says no)
+local function OnScreen() return mod.IsStitched() or (mod.PadViewOn and mod.PadViewOn()) or false end
+
 --------------------------------------------------------------------------------
 -- Names
 --------------------------------------------------------------------------------
@@ -532,9 +536,15 @@ local function Redraw()
 	if not S.IsBuilt() then return end
 	dotSet = dotSet or S.PinSet("friends", 0, 4)
 	zoneSet = zoneSet or S.PinSet("friendzones", 0, 3)
+	-- (the controller's cursor on one of them: left first, as the mouse would leave it, and entered again if
+	-- it's back, its tooltip as it is now: the same frames are handed out again. PadView.lua)
+	if mod.PadViewForget then
+		mod.PadViewForget(dotSet.pins)
+		mod.PadViewForget(zoneSet.pins)
+	end
 	S.ClearPinSet(dotSet)
 	S.ClearPinSet(zoneSet)
-	if not (mod.db.friends or mod.db.guild) or not mod.IsStitched() then return end
+	if not (mod.db.friends or mod.db.guild) or not OnScreen() then return end
 	local now, people, zones = GetTime(), {}, {}
 	for full, r in pairs(roster) do
 		local place = live[full]
@@ -571,6 +581,7 @@ local function Redraw()
 			if p then
 				local pin = S.AddPin(dotSet, person.u, person.v, DotLook(p.class),
 					{ full = person.sender, p = p, roster = person.roster })
+				pin.openmapNoPress = true     -- (PadView.lua: nothing to press, the controller's A zooms in under it)
 				pin:SetScript("OnEnter", DotEnter)
 				pin:SetScript("OnLeave", GameTooltip_Hide)
 			elseif id then
@@ -583,6 +594,7 @@ local function Redraw()
 		local l, rr, t, b = S.Rect(id)
 		table.sort(people, ByName)
 		local pin = S.AddPin(zoneSet, (l + rr) / 2, (t + b) / 2, BADGE, { map = id, people = people })
+		pin.openmapNoPress = true         -- (a badge sits in the middle of its zone, where A zooms into it)
 		if not pin.Count then
 			pin.Count = pin:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
 			pin.Count:SetPoint("BOTTOMRIGHT", 4, -2)
@@ -659,6 +671,8 @@ local function BuildAsk(worldMap)
 	ask:Hide()
 end
 
+-- (not with the controller view, where OpenMap's usual map isn't enabled: sharing stays off there until
+-- it's turned on in the menu or Options)
 local function MaybeAsk(worldMap)
 	if mod.db.shareAsked or mod.db.friendsShare or not mod.enabled or mod.db.presetAsked == false then return end
 	if InCombatLockdown() then return end
@@ -668,7 +682,9 @@ end
 
 --------------------------------------------------------------------------------
 
+-- (once: by OpenMap's usual map, WorldMap.lua, or by its controller view, PadView.lua, whichever sets up)
 function mod:SetupFriends(worldMap)
+	if map then return end
 	map = worldMap
 	if C_ChatInfo and C_ChatInfo.RegisterAddonMessagePrefix then pcall(C_ChatInfo.RegisterAddonMessagePrefix, PREFIX) end
 	ns.RegisterEvent(me, "CHAT_MSG_ADDON", OnAddonMessage)
@@ -689,8 +705,8 @@ function mod:SetupFriends(worldMap)
 		wait = 1
 		redrawIn, rosterIn = redrawIn - 1, rosterIn - 1
 		if rosterIn <= 0 then rosterIn = ROSTER_EVERY Timed("friends and guild asked", AskRosters) end
-		if redrawIn <= 0 or mod.IsStitched() ~= stitched then dirty = true end
-		if dirty then redrawIn, stitched = REDRAW_EVERY, mod.IsStitched() Timed("friends and guild drawn", Redraw) end
+		if redrawIn <= 0 or OnScreen() ~= stitched then dirty = true end
+		if dirty then redrawIn, stitched = REDRAW_EVERY, OnScreen() Timed("friends and guild drawn", Redraw) end
 	end)
 	worldMap:HookScript("OnShow", function()
 		wait, rosterIn, dirty = 0, 0, true
