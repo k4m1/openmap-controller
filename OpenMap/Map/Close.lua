@@ -595,21 +595,37 @@ local function Surface(shown, key, r, u, v, hu, hv, steps, focus)
 	return math.max(focus, tz * (1 - Smooth(off, FOCUS_RANGE)))
 end
 
+-- the caves on the continents in view: which ones can surface doesn't change while the same
+-- continents are in view, so it's worked out once per set of them, not on every move
+local underList = {}            -- "0,1" -> { key, rect, ... }
+local function UnderCandidates(conts)
+	local id = table.concat(conts, ",")
+	local list = underList[id]
+	if list then return list end
+	list = {}
+	for key, c in pairs(ns.MapCaves or EMPTY) do
+		if tContains(conts, c[2]) and not UNDER_SKIP[key] and Primary(key, c) then
+			local r = RectOf(key)
+			if r then list[#list + 1] = key list[#list + 1] = r end
+		end
+	end
+	for i, c in ipairs(ns.MapCaveMinimap or EMPTY) do
+		if tContains(conts, c[1]) then
+			local r = RectOf(-i)
+			if r then list[#list + 1] = -i list[#list + 1] = r end
+		end
+	end
+	underList[id] = list
+	return list
+end
+
 local function UpdateUnderground(layer, conts, u, v, hu, hv, steps)
 	local shown, focus = underShown, 0
 	wipe(shown)
 	if mod.db.underground and conts then
-		for id, c in pairs(ns.MapCaves or EMPTY) do
-			if tContains(conts, c[2]) and not UNDER_SKIP[id] and Primary(id, c) then
-				local r = RectOf(id)
-				if r then focus = Surface(shown, id, r, u, v, hu, hv, steps, focus) end
-			end
-		end
-		for i, c in ipairs(ns.MapCaveMinimap or EMPTY) do
-			if tContains(conts, c[1]) then
-				local r = RectOf(-i)
-				if r then focus = Surface(shown, -i, r, u, v, hu, hv, steps, focus) end
-			end
+		local list = UnderCandidates(conts)
+		for i = 1, #list, 2 do
+			focus = Surface(shown, list[i], list[i + 1], u, v, hu, hv, steps, focus)
 		end
 	end
 	for key, cave in pairs(caves) do

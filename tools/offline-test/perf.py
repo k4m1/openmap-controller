@@ -260,6 +260,64 @@ BUDGETS = {
 }
 
 
+# Lua's own work, counted: the instructions the addon's files run in a frame (the count hook skips the
+# stub's, which stand for the client's). Deterministic, so a budget can be tight; units are x100.
+CPU = """
+function CPU(ns, scen)
+  local S = ns.MapStitch
+  local view = CreateFrame("Frame", nil, UIParent) local canvas = CreateFrame("Frame", nil, view)
+  S.Build(canvas, 100, 80, 2000) S.Layout(S.WORLD) S.ApplyGrade(1, 0.1, "show")
+  local parts = S.Parts()[1][2]
+  local zNow = 1
+  parts[1].GetEffectiveScale = function() return 1.08 * zNow end
+  local l, r, t, b = S.Rect(1429)
+  local cu, cv = (l + r) / 2, (t + b) / 2
+  local function frame() NOW = NOW + 0.016 RunOnUpdate(0.016) end
+  local function view_(z, u, v) zNow = z S.SetZoom(z, z) S.SetView(u or cu, v or cv, 0.5 / z, 0.5 / z, z, z) end
+  view_(12.87) for _ = 1, 4 do for _ = 1, 30 do frame() end view_(12.87) end
+  local n = 0
+  debug.sethook(function() if debug.getinfo(2, "S").short_src:find("Map/") then n = n + 1 end end, "", 100)
+  local costs = {}
+  local function measure(fn) local n0 = n fn() costs[#costs + 1] = n - n0 end
+  if scen == "idle" then
+    for i = 1, 30 do measure(frame) end
+  elseif scen == "pan" then
+    for i = 1, 120 do measure(function() view_(12.87, cu + i * 0.0008, cv + i * 0.0005) frame() end) end
+  elseif scen == "wheel" then
+    local z = 12.87
+    for i = 1, 60 do z = math.max(1, z * 0.95) measure(function() view_(z) frame() end) end
+  elseif scen == "notch" then
+    local z = 12.87
+    for i = 1, 16 do z = math.max(1, z * 0.8) measure(function() view_(z) frame() frame() frame() end) end
+  end
+  debug.sethook()
+  return costs
+end
+"""
+# scenario -> (mean, worst frame) budgets: what the code costs now, about 15% over
+CPU_BUDGETS = {"pan": (170, 650), "wheel": (445, 1760), "notch": (810, 1910)}
+
+
+def cpu(scen):
+    L, ns = load_runtime()
+    L.execute(CPU)
+    c = L.eval("CPU")(ns, scen)
+    return [c[i] for i in range(1, len(c) + 1)]
+
+
+class CpuLoad(unittest.TestCase):
+    def test_budgets(self):
+        for scen, (mean, worst) in CPU_BUDGETS.items():
+            c = cpu(scen)
+            self.assertLessEqual(sum(c) / len(c), mean, "%s: mean frame %s (x100 instructions), budget %s" % (scen, sum(c) / len(c), mean))
+            self.assertLessEqual(max(c), worst, "%s: worst frame %s, budget %s" % (scen, max(c), worst))
+
+    def test_a_settled_view_runs_no_lua(self):
+        c = cpu("idle")
+        self.assertEqual(len(c), 30)
+        self.assertEqual(max(c), 0, c)
+
+
 class ZoomOut(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

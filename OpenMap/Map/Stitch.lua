@@ -795,6 +795,11 @@ S.Look = Look
 -- view, so a pan or zoom doesn't move (and draw) every pin on the world, only those near it
 local PIN_CELL = 0.04           -- world (normalized)
 local cullBox                   -- the last view S.Cull saw, with its margin: { u0, v0, u1, v1 }
+-- what ShowZone last did a zone with (fields of S: the file is at Lua's limit of 200 locals): a zone it's
+-- run for again with nothing it reads changed comes out the same, and isn't walked
+S.zsig = {}                     -- mapID -> { the inputs it last ran with }
+S.zoneEpoch = 0                 -- up by what changes the entries from outside it (a piece explored)
+S.cullVersion = 0               -- up with every new cullBox
 local NONE = {}                 -- (an empty list to loop over, kept: not a new one a frame)
 local function PinCell(set, u, v)
 	local i, j = math.floor(u / PIN_CELL), math.floor(v / PIN_CELL)
@@ -1716,6 +1721,7 @@ function S.ResetShown()
 	wipe(inView)
 	wipe(Live.placed)
 	cullBox = nil
+	S.zoneEpoch = S.zoneEpoch + 1
 	for _, list in pairs(zoneTex) do
 		for _, e in ipairs(list) do e.shown = nil end
 	end
@@ -2822,7 +2828,34 @@ ShowZone = function(mapID)
 	local box = cullBox
 	local z = Live.zones and Live.zones[mapID]       -- (a zone come in by its continent, ApplyDetail: not yet, not drawn)
 	local zoneOn = not z or z.on
-	for _, e in ipairs(zoneTex[mapID] or NONE) do
+	-- (the same inputs as when it last ran: every entry would come out as it did. The box counts only to a
+	-- zone it cuts across: one wholly in it, or wholly out of it, comes out the same from any box. A view
+	-- that moves on a zoom out re-shows every zone in it each time the box is redone: 3300 of 4800
+	-- instruction units in the frame, in tools/offline-test/perf.py)
+	local list = zoneTex[mapID] or NONE
+	local sig = S.zsig[mapID]
+	if not sig then
+		sig = {}
+		S.zsig[mapID] = sig
+	end
+	if sig.count ~= #list then          -- (entries added: its extent again, and nothing known of it)
+		sig.count, sig.epoch = #list, nil
+		local u0, v0, u1, v1, known = math.huge, math.huge, -math.huge, -math.huge, #list > 0
+		for _, e in ipairs(list) do
+			if not e.u0 then known = false break end
+			if e.u0 < u0 then u0 = e.u0 end
+			if e.v0 < v0 then v0 = e.v0 end
+			if e.u1 > u1 then u1 = e.u1 end
+			if e.v1 > v1 then v1 = e.v1 end
+		end
+		sig.bounds = known and { u0, v0, u1, v1 } or false
+	end
+	local b = sig.bounds
+	local free = (not here or not box or (b and b[1] >= box[1] and b[2] >= box[2] and b[3] <= box[3] and b[4] <= box[4])) and true or false
+	local skip = sig.epoch == S.zoneEpoch and sig.grade == gradeNow and sig.here == here and sig.inside == inside
+		and sig.live == detailLive and sig.seen == Live.seen and sig.on == zoneOn
+		and (sig.version == S.cullVersion or (free and sig.free))
+	for _, e in ipairs(skip and NONE or list) do
 		local tex = e[1]
 		local near = here and (not box or not e.u0 or (e.u1 > box[1] and e.u0 < box[3] and e.v1 > box[2] and e.v0 < box[4]))
 		local drawn = (not e.layer or detailLive) and zoneOn   -- (the live layers: only while they show; the cities: always)
@@ -2846,6 +2879,10 @@ ShowZone = function(mapID)
 				tex:ClearAllPoints()
 			end
 		end
+	end
+	if not skip then
+		sig.epoch, sig.grade, sig.here, sig.inside = S.zoneEpoch, gradeNow, here, inside
+		sig.live, sig.seen, sig.on, sig.free, sig.version = detailLive, Live.seen, zoneOn, free, S.cullVersion
 	end
 	local want = (here and detailLive and zoneOn) and true or false
 	if Live.placed[mapID] ~= want then
@@ -3022,6 +3059,7 @@ function S.Cull(u0, v0, u1, v1)
 	cullBox[1], cullBox[2], cullBox[3], cullBox[4], cullBox.w = u0, v0, u1, v1, w
 	-- (done at the end: one that stopped on an error is redone next time, not kept as it was left)
 	cullBox.done = false
+	S.cullVersion = S.cullVersion + 1
 	for mapID in pairs(zoneTex) do
 		local l, r, t, b = S.Rect(mapID)
 		local here = (l and r > u0 and l < u1 and b > v0 and t < v1) and true or false
@@ -3087,6 +3125,7 @@ end
 function S.Recull()
 	if not root then return end
 	if cullBox then cullBox.done = false end
+	S.zoneEpoch = S.zoneEpoch + 1
 	for _, c in ipairs(cities) do
 		c.alpha = nil
 		for _, e in ipairs(zoneTex[c.mapID] or NONE) do e.shown = nil end
@@ -3363,7 +3402,7 @@ function S.RefreshExplored()
 		end
 		for key, piece in pairs(list) do
 			local un = not now[key]
-			if piece.unexplored ~= un then piece.unexplored, changed = un, true end
+			if piece.unexplored ~= un then piece.unexplored, changed = un, true S.zoneEpoch = S.zoneEpoch + 1 end
 		end
 	end
 	-- (a city found by going in, the zone's pieces over it unchanged: Ironforge by the tram)

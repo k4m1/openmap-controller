@@ -14,6 +14,12 @@
   and sea name (hundreds of font strings) in one frame; one name is made a frame now. And the tiles
   fading in as you zoom out set their opacity in 8 steps instead of on every frame, a third to a half
   fewer calls to the client for a zoom out. The offline test tools/offline-test/perf.py counts both.
+- **Less Lua work while you pan and zoom**: a pan or zoom ran every zone in view through its tiles again
+  whenever the view crossed an edge of its keep region, and worked out the caves in view from scratch on
+  every move. A zone now skips its tiles when nothing it depends on changed, and the caves that can
+  surface for a set of continents are worked out once. Offline, the addon's Lua in a pan is about a fifth
+  less, and the worst frame of a mouse-wheel zoom about 40% less. perf.py counts it (instructions, not
+  milliseconds: the game's own time is what `/openmap bench` shows).
 
 ## v0.8.9 (2026-11-14)
 

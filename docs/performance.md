@@ -15,8 +15,19 @@ The test's world is built from the repo's own zone and overlay data (about 40 zo
 | 3 | The live zone art (Unexplored areas: hide, Classic, a client that isn't English) instead of the baked tiles | up to 667 textures drawn at once (231 baked) and 3.7k calls a step | not done: needs baked art for that setting |
 | 4 | Culled continent tiles stay anchored while their layer is hidden | about 200 placed, not drawn | not done: unverified that the client lays out regions under a hidden frame; measure in game first |
 | 5 | The blur copies stay anchored while hidden | about 230 placed, not drawn | not done: as 4 |
+| 6 | `S.Cull` re-ran `ShowZone` over every tile of every zone in view each time the view left its keep region | the worst frame of a wheel zoom: 2740 (x100 Lua instructions) | `ShowZone` keeps what it last ran with (`S.zsig`) and returns early when the grade, view, live art, explored state and (for a zone not wholly inside the keep region) the cull are unchanged: 1530 |
+| 7 | `UpdateUnderground` (Close.lua) filtered every cave by continent on every `S.SetView` | 31% of a pan's addon Lua | the caves that can surface are listed once per set of continents in view: a pan costs a fifth less |
 
 A view that hasn't changed makes no calls (tested), so the cost is in the steps of a zoom, not at rest.
+
+## Lua's own work
+
+Rows 6 and 7 are CPU, not regions. perf.py counts the instructions the addon's files run in a frame
+(`debug.sethook` with a count, skipping the stub's, which stand for the client's), in a pan, a
+mouse-wheel zoom and a notched zoom, and an idle frame must run none. `CPU_BUDGETS` is the mean and
+worst frame, 15% over what the code costs now. Instruction counts say where Lua's time goes; they
+aren't milliseconds, and `/openmap bench` is the measure. What's left in a pan: the caves' `Surface`
+test per frame, `ShowZone`, the loader's fade.
 
 ## The zones' tiles come after the opening
 
