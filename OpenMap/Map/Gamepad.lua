@@ -199,13 +199,19 @@ end
 function mod:SetupGamepad(worldMap)
 	SetupPadKeys(worldMap)
 	local driver = CreateFrame("Frame", nil, worldMap)
-	local wait = 0
-	driver:SetScript("OnUpdate", function(_, elapsed)
-		wait = wait - elapsed
-		if wait > 0 then return end
-		wait = EVERY
+	local function Look()
 		local x, y = mod.PadCursor()
 		Enter(x and (Under(x, y)) or nil)
+	end
+	-- (the game's timer while the map's up, not a script on every frame)
+	local function Start()
+		if driver.timer then driver.timer:Cancel() end
+		driver.timer = C_Timer.NewTicker(EVERY, Look)
+	end
+	driver:SetScript("OnShow", Start)
+	driver:SetScript("OnHide", function()
+		if driver.timer then driver.timer:Cancel() driver.timer = nil end
+		Enter(nil)
 	end)
-	driver:SetScript("OnHide", function() Enter(nil) end)
+	if driver:IsVisible() then Start() end
 end

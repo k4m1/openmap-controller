@@ -20,6 +20,10 @@
   surface for a set of continents are worked out once. Offline, the addon's Lua in a pan is about a fifth
   less, and the worst frame of a mouse-wheel zoom about 40% less. perf.py counts it (instructions, not
   milliseconds: the game's own time is what `/openmap bench` shows).
+- **Fewer scripts running on every frame**: the tiles' fade-in is an animation the game runs, not a
+  loop here setting each one's opacity; the map's tenth-of-a-second check, the gamepad's look under the
+  cursor and the names' wait for the map to be still are the game's timers, not a script on every
+  frame. At rest, no script of OpenMap's runs on each frame (tested).
 
 ## v0.8.9 (2026-11-14)
 

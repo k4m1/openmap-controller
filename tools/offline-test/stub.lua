@@ -178,6 +178,7 @@ end
 -- frames ---------------------------------------------------------------------
 FRAMES = {}
 local ONUPDATE = {}
+ONUPDATE_SCRIPTS = ONUPDATE   -- (for perf.py: which frames run a script every frame)
 
 local regionMT = {}
 local function NewRegion(kind, name, parent)

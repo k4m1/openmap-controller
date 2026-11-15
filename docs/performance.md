@@ -18,6 +18,8 @@ The test's world is built from the repo's own zone and overlay data (about 40 zo
 | 6 | `S.Cull` re-ran `ShowZone` over every tile of every zone in view each time the view left its keep region | the worst frame of a wheel zoom: 2740 (x100 Lua instructions) | `ShowZone` keeps what it last ran with (`S.zsig`) and returns early when the grade, view, live art, explored state and (for a zone not wholly inside the keep region) the cull are unchanged: 1530 |
 | 7 | `UpdateUnderground` (Close.lua) filtered every cave by continent on every `S.SetView` | 31% of a pan's addon Lua | the caves that can surface are listed once per set of continents in view: a pan costs a fifth less |
 
+| 8 | Per-frame Lua: the loader set each fading tile's opacity every frame, and three scripts ran on every frame to wait for 0.05 to 0.15 s | the loader stayed shown for the 0.3 s of the last fades | a tile fades with an Alpha animation of its own (made once: `S.FadeIn`, counted as `anims` in perf.py); one timer releases the baked tiles when the last fade is over; the map's check, the gamepad look and the names' watch are `C_Timer` tickers while their frame is shown |
+
 A view that hasn't changed makes no calls (tested), so the cost is in the steps of a zoom, not at rest.
 
 ## Lua's own work

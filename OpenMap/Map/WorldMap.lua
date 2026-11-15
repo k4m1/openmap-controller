@@ -599,15 +599,11 @@ end
 
 local ticker = CreateFrame("Frame")
 ticker:Hide()
-local elapsedSum = 0
 -- a switch has Blizzard refresh every map data provider (every Questie pin with them): a
 -- hitch, so it waits until the view has been still this long, not the moment it stops
 local SWITCH_AFTER = 0.6
 local stillFor = 0
-ticker:SetScript("OnUpdate", function(_, elapsed)
-	elapsedSum = elapsedSum + elapsed
-	if elapsedSum < 0.1 then return end
-	elapsedSum = 0
+local function Tick()
 	if not active then
 		if mod.instanceWorldHidden then RaisePlayer() end
 		return
@@ -645,6 +641,14 @@ ticker:SetScript("OnUpdate", function(_, elapsed)
 		local target = PickMap(u, v, zoom, mapID)
 		if target ~= mapID then Switch(target) end
 	end
+end
+-- ten times a second, while it's shown: the game's timer, not a script on every frame
+ticker:SetScript("OnShow", function(self)
+	if self.timer then self.timer:Cancel() end
+	self.timer = C_Timer.NewTicker(0.1, Tick)
+end)
+ticker:SetScript("OnHide", function(self)
+	if self.timer then self.timer:Cancel() self.timer = nil end
 end)
 
 --------------------------------------------------------------------------------

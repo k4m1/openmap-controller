@@ -109,6 +109,15 @@ do
 	end
 end
 
+-- regions made since FRAMES[i0], not counting the animation objects (a tile's fade-in is the game's: ANIMS)
+function MADE(i0, anims)
+  local n = 0
+  for i = i0 + 1, #FRAMES do
+    local k = FRAMES[i].__kind
+    if (k == "AnimationGroup" or k == "Animation") == anims then n = n + 1 end
+  end
+  return n
+end
 function PERF(ns, zooms, start, unexplored)
 	local S = ns.MapStitch
 	local out = { rows = {} }
@@ -117,7 +126,7 @@ function PERF(ns, zooms, start, unexplored)
 	local made0, t0 = #FRAMES, os.clock()
 	if not S.Build(canvas, 100, 80, 2000) then return { built = false } end
 	-- (the frame the map opens in: what S.Build makes before the first frame after it)
-	out.open = { made = #FRAMES - made0, ms = (os.clock() - t0) * 1000 }
+	out.open = { made = MADE(made0, false), ms = (os.clock() - t0) * 1000 }
 	S.Layout(S.WORLD)
 	S.ApplyGrade(1, 0.1, unexplored or "show")
 	local parts = S.Parts()[1][2]
@@ -166,7 +175,7 @@ function PERF(ns, zooms, start, unexplored)
 		local calls, by = CALLS.n, CALLS.by
 		local kb = collectgarbage("count") - before
 		local drawn, placed, icons = census()
-		return { zoom = z, drawn = drawn, placed = placed, icons = icons, calls = calls, ms = ms, kb = kb, by = by, made = #FRAMES - made0 }
+		return { zoom = z, drawn = drawn, placed = placed, icons = icons, calls = calls, ms = ms, kb = kb, by = by, made = MADE(made0, false), anims = MADE(made0, true) }
 	end
 	-- the map open at the first zoom (settled: its files in), then the zoom out
 	-- (a few times over: the map's own ticker sets the view again as zones are made, and the blur follows them)
@@ -232,7 +241,7 @@ def run(unexplored="show"):
     rows = []
     for i in range(1, len(res["rows"]) + 1):
         r = res["rows"][i]
-        rows.append({k: r[k] for k in ("zoom", "drawn", "placed", "icons", "calls", "ms", "kb", "made")})
+        rows.append({k: r[k] for k in ("zoom", "drawn", "placed", "icons", "calls", "ms", "kb", "made", "anims")})
         rows[-1]["by"] = {k: v for k, v in r["by"].items()}
     errs = L.eval("ERRORS")
     stats = {k: res["stats"][k] for k in ("zones", "tiles", "overlays", "pins", "frames")}
@@ -255,8 +264,8 @@ def table(rows):
 OPEN_BUDGET = 1150
 FRAME_BUDGET = 450          # ... and in any frame after, while the zones are made (S.BuildZones)
 BUDGETS = {
-    "show": {"drawn": 460, "placed": 1120, "calls": 1330, "made": 160},
-    "hide": {"drawn": 735, "placed": 1020, "calls": 4100, "made": 160},
+    "show": {"drawn": 460, "placed": 1120, "calls": 1330, "made": 160, "anims": 240},
+    "hide": {"drawn": 735, "placed": 1020, "calls": 4100, "made": 160, "anims": 510},
 }
 
 
@@ -295,7 +304,7 @@ function CPU(ns, scen)
 end
 """
 # scenario -> (mean, worst frame) budgets: what the code costs now, about 15% over
-CPU_BUDGETS = {"pan": (170, 650), "wheel": (445, 1760), "notch": (810, 1910)}
+CPU_BUDGETS = {"pan": (155, 555), "wheel": (420, 1750), "notch": (710, 1840)}
 
 
 def cpu(scen):
@@ -311,6 +320,29 @@ class CpuLoad(unittest.TestCase):
             c = cpu(scen)
             self.assertLessEqual(sum(c) / len(c), mean, "%s: mean frame %s (x100 instructions), budget %s" % (scen, sum(c) / len(c), mean))
             self.assertLessEqual(max(c), worst, "%s: worst frame %s, budget %s" % (scen, max(c), worst))
+
+    def test_nothing_runs_every_frame_at_rest(self):
+        # (a script on OnUpdate is Lua on every frame: the loader, the zones' build and the names' watch
+        # are shown while they have work, and the game's timers do the rest)
+        L, ns = load_runtime()
+        L.execute(CPU)
+        L.execute("""
+          function SHOWN_ONUPDATE(ns)
+            local S = ns.MapStitch
+            local view = CreateFrame("Frame", nil, UIParent) local canvas = CreateFrame("Frame", nil, view)
+            S.Build(canvas, 100, 80, 2000) S.Layout(S.WORLD) S.ApplyGrade(1, 0.1, "show")
+            local l, r, t, b = S.Rect(1429)
+            S.SetZoom(12.87, 12.87) S.SetView((l + r) / 2, (t + b) / 2, 0.04, 0.04, 12.87, 12.87)
+            for _ = 1, 300 do NOW = NOW + 0.016 RunOnUpdate(0.016) end
+            RunTimers(2)
+            local out = {}
+            for f, fn in pairs(ONUPDATE_SCRIPTS) do
+              if f.__shown and f.__scripts.OnUpdate == fn then out[#out + 1] = debug.getinfo(fn, "S").short_src .. ":" .. debug.getinfo(fn, "S").linedefined end
+            end
+            return out
+          end""")
+        out = L.eval("SHOWN_ONUPDATE")(ns)
+        self.assertEqual([out[i] for i in range(1, len(out) + 1) if "Map/" in out[i]], [])
 
     def test_a_settled_view_runs_no_lua(self):
         c = cpu("idle")

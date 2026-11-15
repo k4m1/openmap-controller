@@ -1413,13 +1413,19 @@ function S.Build(parent, artLevel, range, iconLevel)
 				for _, copy in ipairs(n[1].halos or NONE) do copy:SetShown(not on) end
 			end
 		end
-		names.watch:SetShown(on)
+		if on then names.StartWatch() end
 	end
-	names.watch = CreateFrame("Frame")
-	names.watch:Hide()
-	names.watch:SetScript("OnUpdate", function()
-		if GetTime() - (names.movedAt or 0) > 0.15 then names.Hush(false) end
-	end)
+	-- (a timer while they rest, not a script on every frame: it checks again until the map has been still)
+	names.Watch = function()
+		names.watching = false
+		if not names.hushed then return end
+		if GetTime() - (names.movedAt or 0) > 0.15 then names.Hush(false) else names.StartWatch() end
+	end
+	names.StartWatch = function()
+		if names.watching then return end
+		names.watching = true
+		C_Timer.After(0.1, names.Watch)
+	end
 	for _, label in ipairs(ns.MapLabels or {}) do
 		local f = CreateFrame("Frame", nil, namesFrame)
 		f:SetPoint("TOPLEFT")
@@ -2246,16 +2252,42 @@ end
 -- set over its frames at the most: 60, not 300 (a frame setting 300 files was a 35 ms hitch on
 -- a 240 Hz machine, each file set being a load and an upload, in testing: two seconds for the
 -- detail to come in, and a pan into new ground arriving over a few more frames)
-local LOAD_PER_FRAME = { 40, frames = 6, most = 60, steps = 8 }   -- (one local: the file is at Lua's limit of 200)
+local LOAD_PER_FRAME = { 40, frames = 6, most = 60 }   -- (one local: the file is at Lua's limit of 200)
 local LOAD_FADE = 0.3           -- seconds
 local loadQueue, loadAt = {}, 1
-local fading, fadingN = {}, 0   -- texture -> when it got its file
+-- a texture's fade-in is the game's: an Alpha animation of its own (made the first time it's wanted),
+-- not a call to the client on every frame from here. The texture is at full alpha, the animation
+-- takes it from 0 to there
+function S.FadeIn(tex)
+	local g = tex.omFade
+	if not g then
+		g = tex:CreateAnimationGroup()
+		local a = g:CreateAnimation("Alpha")
+		a:SetFromAlpha(0)
+		a:SetToAlpha(1)
+		a:SetDuration(LOAD_FADE)
+		a:SetSmoothing("IN_OUT")
+		tex.omFade = g
+	end
+	tex:SetAlpha(1)
+	g:Stop()
+	g:Play()
+end
+-- the last fade is over (a timer, not a check on each frame): the baked tiles can go
+function S.LoadDone(gen)
+	if gen ~= LOAD_PER_FRAME.gen or loadAt > 1 or #loadQueue > 0 then return end
+	Baked.busy = false
+	if Baked.holding then
+		Baked.holding = false
+		ApplyDetail()
+	end
+end
 local loader = CreateFrame("Frame")
 loader:Hide()
 loader:SetScript("OnUpdate", function(self)
 	-- (files wanted since the zoom last changed, by a pan or a cull: the tiles held over them too)
 	if Baked.busy and Baked.use and not Baked.holding then ApplyDetail() end
-	local n, now = 0, GetTime()
+	local n = 0
 	local L_ = LOAD_PER_FRAME
 	local most = math.min(L_.most, math.max(L_[1], math.ceil((#loadQueue - loadAt + 1) / L_.frames)))
 	while loadAt <= #loadQueue and n < most do
@@ -2264,37 +2296,17 @@ loader:SetScript("OnUpdate", function(self)
 		if tex.omFile then
 			tex:SetTexture(tex.omFile, nil, nil, "TRILINEAR")
 			tex.omFile = nil
-			tex:SetAlpha(0)
-			tex.omStep = 0
-			fading[tex] = now
-			fadingN = fadingN + 1
+			S.FadeIn(tex)
 			n = n + 1
 		end
 	end
 	if loadAt > #loadQueue then wipe(loadQueue) loadAt = 1 end
-	for tex, t0 in pairs(fading) do
-		local t = (now - t0) / LOAD_FADE
-		if t >= 1 then
-			tex:SetAlpha(1)
-			fading[tex] = nil
-			fadingN = fadingN - 1
-		else
-			-- (in steps: a fade is a call to the client a frame for every texture fading, 700 and more while a
-			-- zoom out brings the continents' tiles in; a step more than the eye sees is one it doesn't)
-			local a = math.floor(t * t * (3 - 2 * t) * L_.steps + 0.5) / L_.steps
-			if a ~= tex.omStep then
-				tex.omStep = a
-				tex:SetAlpha(a)
-			end
-		end
-	end
-	if loadAt == 1 and #loadQueue == 0 and fadingN == 0 then
+	if loadAt == 1 and #loadQueue == 0 then
+		-- (the queue's empty: this stops running; the last fades finish by themselves)
 		self:Hide()
-		Baked.busy = false
-		if Baked.holding then                   -- (all in: the baked tiles can go)
-			Baked.holding = false
-			ApplyDetail()
-		end
+		L_.gen = (L_.gen or 0) + 1
+		local gen = L_.gen
+		C_Timer.After(LOAD_FADE + 0.05, function() S.LoadDone(gen) end)
 	end
 end)
 
